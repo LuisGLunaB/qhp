@@ -1,6 +1,4 @@
 <?php
-$salt = "viveriveniversumvivusvici";
-
 $debugging = True;
 if($debugging){
 	error_reporting(E_ALL);
@@ -9,12 +7,17 @@ if($debugging){
 	error_reporting(0);
 	ini_set('display_errors', 0);
 }
-# $q['handle']->bindValue(':'.$key, $value);
-# $q['handle']->bindValue(':table', $table);
 
 function is_assoc(array $array){
     $keys = array_keys($array);
     return array_keys($keys) !== $keys;
+}
+function str_has($word,$text){
+	if (strpos($text, $word) !== false) {
+	  return True;
+		}else{
+		return False;
+	}
 }
 
 class SQL_Connection{
@@ -72,13 +75,13 @@ class SQL_Connection{
 class SQL{
 	public $con = NULL;
 	public $debugging = False;
-	public $status = True;
 	public $q = NULL;
 	public $table = "";
+	public $status = True;
 	public $message = "";
 
 	public $FIELDS = NULL;
-	public $SELECTFIELDS = NULL;
+	public $SELECTFIELDS = [];
 	public $IDFIELD = NULL;
 
 	public $datos = array();
@@ -86,9 +89,14 @@ class SQL{
 	public $QUERY = "";
 	public $SELECT_query = "";
 	public $SELECT_binds = array();
+	public $WHERE_query = "";
 	public $WHERE_binds = array();
 	public $WHERE_count = 0;
+	public $INSERT_query = "";
+	public $INSERT_binds = array();
+	public $GROUPBY_query = "";
 
+	public $last = 0;
 	public $indexFirst = True;
 	public $time = 0;
 	public $memory = 0;
@@ -139,6 +147,17 @@ class SQL{
 
 		return $masked;
 	}
+	public static function multimask($data,$mask){
+		$c = 0;
+		$r = array();
+		foreach($data as $row){
+			foreach($mask as $key){
+				$r[$c][$key] = $data[$c][$key];
+			}
+			$c++;
+		}
+		return $r;
+	}
 	public static function binding(&$binds,$data,$text = NULL,$posttext="",$init = 0){
 		$associative = is_assoc($data);
 		$nulltext = is_null($text);
@@ -166,6 +185,18 @@ class SQL{
 					$c++;
 			}
 		}
+
+		return $binds;
+	}
+	public static function multibinding(&$binds,$data,$text = NULL,$posttext="",$init = 0){
+		$c = $init;
+		$text = (is_null($text)) ? "VAL_" : $text;
+		foreach($data as $row){
+			foreach($row as $key => $value){
+				$binds["$text$key$c$posttext"] = $value;
+			}
+			$c++;
+		}
 		return $binds;
 	}
 	public function buildQuery(){
@@ -174,14 +205,13 @@ class SQL{
 
 		$query .= $this->SELECT_query;
 		$query .= $this->WHERE_query;
+		$query .= $this->GROUPBY_query;
+		$query .= ";";
+
 		return $query;
 	}
 	public function macroBinds(){
 		return $this->WHERE_binds;
-	}
-	public static function implode($binds,$text=", "){
-		$keys = array_keys($binds);
-		return implode($text,$keys);
 	}
 	public function buildBinder(&$q){
 		$where = &$this->WHERE_binds;
@@ -220,7 +250,55 @@ class SQL{
 		$this->IDFIELD = $fields[0];
 		return $this->IDFIELD;
 	}
-	
+
+	public function INSERT($data, $mask = NULL,$text = "insert_", $posttext=""){
+		# Reference variables
+		$table = &$this->table;
+		$query = &$this->INSERT_query;
+		$binds = &$this->INSERT_binds;
+		$con = &$this->con;
+		$q = &$this->q;
+		$this->status = True;
+		$last = &$this->last;
+
+		# Mask data depending on Input rows to insert
+		$mask = (is_null($mask)) ? $this->DESCRIBE() : $mask;
+		$multi = (isset($data[0])) ? True : False;
+		$fields = ($multi) ? array_keys($data[0]) : array_keys($data);
+		if($multi){$datos = &$data;}else{$datos[0] = &$data;}
+
+		# Apply mask to fields to be inserted and generate string
+		$fields = self::mask($fields,$mask);
+		$fields_text = implode(", ",$fields);
+
+		# Mask and then bind data to be inserted (multidimensional)
+		$datos = self::multimask($datos,$fields);
+		self::multibinding($binds,$datos,$text,$posttext);
+
+		# Turn binded data (multidimensional) into query
+		$query = "INSERT INTO $table ( $fields_text ) VALUES ";
+		$rows_array = [];$c = 0;
+		foreach($datos as $row){
+			$values_array = [];
+			foreach($fields as $key){$values_array[] = ":$text$key$c$posttext";}
+			$rows_array[] = "( ".implode(", ",$values_array)." )";
+			$c++;
+		}
+		$query .= implode(", ",$rows_array).";";
+
+		# Try to execute
+		try{
+			$q['handle'] = $con['handler']->prepare($query);
+			$q['handle']->execute( $binds );
+			$last = $con['handler']->lastInsertId();
+			}catch(PDOException $e){
+			$this->status = False;
+			$last = 0;
+			$this->error("* Error en INSERT.", $e);
+		}
+
+		return $query;
+	}
 	public function SELECT($fields = NULL, $mask = NULL){
 		$table = &$this->table;
 		$query = &$this->SELECT_query;
@@ -238,6 +316,71 @@ class SQL{
 		$query = "SELECT $selection FROM $table ";
 		return $query;
 	}
+	public function DISTINCT($fields = NULL, $mask = NULL){
+		$this->SELECT($fields, $mask);
+		$query = &$this->SELECT_query;
+		$query = str_replace("SELECT", "SELECT DISTINCT" ,$query);
+		return $query;
+	}
+
+	public function OPERATION($OPERATION = "COUNT",$fields = NULL, $mask = NULL, $isDistinc = False){
+		$table = &$this->table;
+		$query = &$this->SELECT_query;
+
+		$validOperations = ["COUNT","SUM","AVG","MAX","MIN","LENGTH","UPPER","LOWER"];
+		$OPERATION = (in_array($OPERATION,$validOperations)) ? $OPERATION : "COUNT";
+
+		$ALL = is_null($fields);
+		if(!$ALL){
+			$mask = (is_null($mask)) ? $this->DESCRIBE() : $mask;
+			$fields = self::mask($fields,$mask);
+		}
+
+		$fields = ($ALL) ? ["*"] : $fields;
+		$isDistinc = ($ALL) ? False : $isDistinc;
+
+		$OPERATION_query = [];
+		$distinct = ($isDistinc) ? "DISTINCT" : "";
+		foreach($fields as $key){
+			$AS = ($ALL) ? "$OPERATION" : "$key"."_$distinct$OPERATION";
+			$this->SELECTFIELDS[] = $AS;
+			$OPERATION_query[] = "$OPERATION( $distinct $key ) AS $AS";
+		}
+		$OPERATION_query = implode(", ",$OPERATION_query);
+
+		if($query==""){
+			$query = "SELECT $OPERATION_query FROM $table ";
+		}else{
+			$query = str_replace("FROM", ", $OPERATION_query FROM" ,$query);
+		}
+
+		return $query;
+	}
+	public function COUNT($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("COUNT",$fields,$mask,$isDistinc);
+	}
+	public function SUM($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("SUM",$fields,$mask,$isDistinc);
+	}
+	public function AVG($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("AVG",$fields,$mask,$isDistinc);
+	}
+	public function MAX($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("MAX",$fields,$mask,$isDistinc);
+	}
+	public function MIN($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("MIN",$fields,$mask,$isDistinc);
+	}
+	public function LENGTH($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("LENGTH",$fields,$mask,$isDistinc);
+	}
+	public function UPPER($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("UPPER",$fields,$mask,$isDistinc);
+	}
+	public function LOWER($fields = NULL, $mask = NULL, $isDistinc = False){
+		return $this->OPERATION("LOWER",$fields,$mask,$isDistinc);
+	}
+
 	public function WHERE($where, $mask = NULL, $symbol = "="){
 		$query = &$this->WHERE_query;
 		$binds = &$this->WHERE_binds;
@@ -290,7 +433,7 @@ class SQL{
 		$symbol = ($inclusive) ? ">=" : ">";
 		return $this->WHERE($where,$mask,$symbol);
 	}
-	public function LOWER($where,$mask=NULL,$inclusive=True){
+	public function LESSER($where,$mask=NULL,$inclusive=True){
 		if(is_bool($mask)){$inclusive = $mask;$mask = NULL;}
 		$symbol = ($inclusive) ? "<=" : "<";
 		return $this->WHERE($where,$mask,$symbol);
@@ -301,29 +444,43 @@ class SQL{
 	public function WHEREID($id){
 		$id = (int) $id;
 		$field = $this->DESCRIBEID();
-		return $this->WHERE( array( $field => $id), [$field] );
+		$this->WHERE( array( $field => $id), [$field] );
+		return $this->EXECUTE();
+	}
+
+	public function GROUPBY($fields = NULL, $mask = NULL){
+		$query = &$this->GROUPBY_query;
+		$mask = (is_null($mask)) ? $this->DESCRIBE() : $mask;
+		$fields = self::mask($fields,$mask);
+		$query = [];
+		foreach($fields as $key){$query[] = $key;}
+		$query = implode(", ",$query);
+		$query = "GROUP BY $query ";
+		return $query;
 	}
 
 	public function EXECUTE(&$q = NULL){
 		# Reference $q properly
 		if(is_null($q)){$q = &$this->q;}
 		$con = &$this->con;
+		$this->status = True;
 		$datos = &$this->datos;
 		$datos = array();
 		$fields = &$this->SELECTFIELDS;
-		$this->status = True;
+
 		# Query statistics
 		$startT = microtime(true); // Measure time
 		$startM = memory_get_usage(); // Measure memory
+		if($this->SELECT_query==""){$this->SELECT();}
 		try{
 			# Execution and handling
 			$this->buildQuery();
 			$macroBinds = $this->macroBinds();
 			$q['handle'] = $con['handler']->prepare($this->QUERY);
 			$q['handle']->setFetchMode(PDO::FETCH_ASSOC);
+			//$this->buildBinder($q);
+			$q['handle']->execute( $macroBinds );
 			//echo $this->QUERY;print_r($macroBinds);
-			$this->buildBinder($q);
-			$q['handle']->execute();
 			# Turn data into Array
 			$c = 0;
 			while( $row=$q['handle']->fetch() ) {
@@ -356,8 +513,12 @@ class SQL{
 			$this->datos = json_decode($data);
 		}
 	}
-	public function json($show=True){
-		$json = json_encode($this->datos);
+	public function json($show=True,$isJSON=True){
+		$datos['status'] = $this->status;
+		$datos['message'] = $this->message;
+		$datos["data"] = $this->datos;
+		if($isJSON){header('Content-Type: application/json');}
+		$json = json_encode($datos, JSON_PRETTY_PRINT );
 		if($show){echo $json;}
 		return $json;
 	}
@@ -396,10 +557,16 @@ class SQL{
 }
 
 $con = SQL_Connection::Qconnect("mkti.mx","ventallanta","grupollancarsa","Grupollancarsa22",$debugging);
-$PRODUCTOS = new SQL($con,"productos");
-$PRODUCTOS->SELECT( ["id","alto","ancho","rin"] );
-$PRODUCTOS->BETWEEN( array("id" => [100,200]) );
-$PRODUCTOS->IN( array("rin"=>[14,19]) );
-$PRODUCTOS->EXECUTE();
-$PRODUCTOS->show();
+$PRUEBA = new SQL($con,"prueba");
+
+$PRUEBA->SELECT( ["nombre","activo"] );
+$PRUEBA->AVG(["numero"]);
+$PRUEBA->GROUPBY( ["nombre","activo"] );
+//$PRUEBA->MAX( ["numero"],NULL );
+//$PRUEBA->AVG( ["activo"] );
+$PRUEBA->WHERE( array("nombre"=>"Luis") );
+$PRUEBA->GREATER( array("id_prueba"=>5) );
+$PRUEBA->EXECUTE();
+echo $PRUEBA->QUERY;
+$PRUEBA->show();
 ?>
