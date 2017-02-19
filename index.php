@@ -85,6 +85,9 @@ class SQL{
 	public $IDFIELD = NULL;
 
 	public $datos = array();
+	public $LIMIT = 50;
+	public $OFFSET = 0;
+	public $PAGENUMBER = 0;
 
 	public $QUERY = "";
 	public $SELECT_query = "";
@@ -95,6 +98,8 @@ class SQL{
 	public $INSERT_query = "";
 	public $INSERT_binds = array();
 	public $GROUPBY_query = "";
+	public $ORDERBY_query = "";
+	public $PAGE_query = "";
 
 	public $last = 0;
 	public $indexFirst = True;
@@ -206,6 +211,8 @@ class SQL{
 		$query .= $this->SELECT_query;
 		$query .= $this->WHERE_query;
 		$query .= $this->GROUPBY_query;
+		$query .= $this->ORDERBY_query;
+		$query .= ($this->PAGE_query=="") ? $this->PAGE() : $this->PAGE_query;
 		$query .= ";";
 
 		return $query;
@@ -299,6 +306,7 @@ class SQL{
 
 		return $query;
 	}
+
 	public function SELECT($fields = NULL, $mask = NULL){
 		$table = &$this->table;
 		$query = &$this->SELECT_query;
@@ -459,6 +467,47 @@ class SQL{
 		return $query;
 	}
 
+	public function PAGE($page = NULL, $limit = NULL){
+		$query = &$this->PAGE_query;
+
+		if(is_null($page)){
+			$page = &$this->PAGENUMBER;
+		}else{
+			$this->PAGENUMBER = (int) $page;
+			$page = &$this->PAGENUMBER;
+		}
+
+		if(is_null($limit)){
+			$limit = &$this->LIMIT;
+		}else{
+			$this->LIMIT = (int) $limit;
+			$limit = &$this->LIMIT;
+		}
+
+		$offset = &$this->OFFSET;
+		$offset = ($limit * $page);
+
+		$query = "LIMIT $limit OFFSET $offset ";
+		return $query;
+	}
+	public function ORDERBY($data,$mask = NULL){
+		$query = &$this->ORDERBY_query;
+		$mask = (is_null($mask)) ? $this->DESCRIBE() : $mask;
+		$fields = self::mask($data,$mask);
+
+		$validOrders = ["ASC","DESC"];
+
+		$query = [];
+		foreach($fields as $field=>$order){
+			$order = (in_array($order,$validOrders)) ? $order : "ASC";
+			$query[] = "$field $order";
+		}
+		$query = implode(", ",$query);
+		$query = "ORDER BY $query ";
+
+		return $query;
+	}
+
 	public function EXECUTE(&$q = NULL){
 		# Reference $q properly
 		if(is_null($q)){$q = &$this->q;}
@@ -525,31 +574,35 @@ class SQL{
 	public function show($show=True){
 		$datos = &$this->datos;
 		$IF = &$this->indexFirst;
-		if($IF){
-			$lines = array_keys($datos);
-			$fields = array_keys($datos[$lines[0]]);
-			}else{
-			$fields = array_keys($datos);
-			$lines = array_keys($datos[$lines[0]]);
-		}
+		if(sizeof($datos)!=0){
+			if($IF){
+				$lines = array_keys($datos);
+				$fields = array_keys($datos[$lines[0]]);
+				}else{
+				$fields = array_keys($datos);
+				$lines = array_keys($datos[$lines[0]]);
+			}
 
-		$table = "";
-		$table .= '<table class="phptable">';
+			$table = "";
+			$table .= '<table class="phptable">';
 
-			$table .= '<tr style="background-color: black; color: white;">';
-			foreach($fields as $f){$table .="<td>$f</td>";}
-			$table .= "</tr>";
+				$table .= '<tr style="background-color: black; color: white;">';
+				foreach($fields as $f){$table .="<td>$f</td>";}
+				$table .= "</tr>";
 
-				foreach($lines as $c){
-					$table .= "<tr>";
-					foreach($fields as $f){
-						$value = ($IF) ? $datos[$c][$f] : $datos[$f][$c];
-						$table .="<td>".$value."</td>";
+					foreach($lines as $c){
+						$table .= "<tr>";
+						foreach($fields as $f){
+							$value = ($IF) ? $datos[$c][$f] : $datos[$f][$c];
+							$table .="<td>".$value."</td>";
+						}
+						$table .= "</tr>";
 					}
-					$table .= "</tr>";
-				}
 
-		$table .= "</table>";
+			$table .= "</table>";
+		}else{
+			$table = '</br><div style="font-size:20px; color: red;">Tabla vacía.</div></br>';
+		}
 
 		if($show){echo $table;}
 		return $table;
@@ -557,15 +610,18 @@ class SQL{
 }
 
 $con = SQL_Connection::Qconnect("mkti.mx","ventallanta","grupollancarsa","Grupollancarsa22",$debugging);
+
 $PRUEBA = new SQL($con,"prueba");
 
-$PRUEBA->SELECT( ["nombre","activo"] );
-$PRUEBA->AVG(["numero"]);
-$PRUEBA->GROUPBY( ["nombre","activo"] );
-//$PRUEBA->MAX( ["numero"],NULL );
-//$PRUEBA->AVG( ["activo"] );
-$PRUEBA->WHERE( array("nombre"=>"Luis") );
-$PRUEBA->GREATER( array("id_prueba"=>5) );
+$PRUEBA->SELECT( ["id_prueba","activo"] );
+$PRUEBA->AVG(["numero","activo"]);
+$PRUEBA->MAX(["numero","activo"]);
+$PRUEBA->MIN(["numero","activo"]);
+$PRUEBA->COUNT(["numero","activo"]);
+$PRUEBA->GROUPBY( ["nombre"] );
+
+$PRUEBA->ORDERBY( array("nombre"=>"DESC","activo"=>"DESC") );
+
 $PRUEBA->EXECUTE();
 echo $PRUEBA->QUERY;
 $PRUEBA->show();
