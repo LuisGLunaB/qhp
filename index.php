@@ -20,6 +20,17 @@ function str_has($word,$text){
 	}
 }
 
+function EqualReferences(&$first, &$second){
+    if($first !== $second){
+        return false;
+    }
+    $value_of_first = $first;
+    $first = ($first === true) ? false : true; // modify $first
+    $is_ref = ($first === $second); // after modifying $first, $second will not be equal to $first, unless $second and $first points to the same variable.
+    $first = $value_of_first; // unmodify $first
+    return $is_ref;
+}
+
 class SQL_Connection{
 	public $con = NULL;
   protected $debugging = True;
@@ -77,8 +88,10 @@ class SQL{
 	public $debugging = False;
 	public $q = NULL;
 	public $table = "";
+	public $tables = [];
 	public $status = True;
 	public $message = "";
+	public $dbTables = [];
 
 	public $FIELDS = NULL;
 	public $SELECTFIELDS = [];
@@ -117,6 +130,7 @@ class SQL{
 		$this->debugging = $debugging;
 		$this->con = $con;
 		$this->table = $table;
+		$this->tables = [$table];
 	}
 	public static function alert($text, $debugging = False){
 		if($text!=""){
@@ -150,7 +164,8 @@ class SQL{
 			}
 		}
 
-		return $masked;
+		//return $masked;
+		return $data;
 	}
 	public static function multimask($data,$mask){
 		$c = 0;
@@ -204,19 +219,61 @@ class SQL{
 		}
 		return $binds;
 	}
+	public static function validKey($key){
+		$valid = True;
+		$black = ["'",'"',"%","&","=","!","|","¡","/",":",";"];
+		$chars = str_split($key);
+		foreach($char as $c){
+			if(in_array($c,$black)){$valid = False; break;}
+		}
+		return $valid;
+	}
 	public function buildQuery(){
 		$query = &$this->QUERY;
 		$query = "";
+
+		if($this->SELECT_query==""){$this->SELECT();}
 
 		$query .= $this->SELECT_query;
 		$query .= $this->WHERE_query;
 		$query .= $this->GROUPBY_query;
 		$query .= $this->ORDERBY_query;
 		$query .= ($this->PAGE_query=="") ? $this->PAGE() : $this->PAGE_query;
+		//$query .= $this->PAGE_query;
 		$query .= ";";
 
 		return $query;
 	}
+	public function buildView(){
+		$query = "";
+
+		if($this->SELECT_query==""){$this->SELECT();}
+
+		$query .= $this->SELECT_query;
+		$query .= $this->WHERE_query;
+		$query .= $this->GROUPBY_query;
+		$query .= $this->ORDERBY_query;
+		$query .= ";";
+
+		return $query;
+	}
+	public function buildInto($tabla,$IN = ""){
+		$query = "";
+		if( self::validKey($tabla) and self::validKey($IN) ){
+			$IN = ($IN == "") ? "" : "IN '$IN'";
+
+			if($this->SELECT_query==""){$this->SELECT();}
+			$this->SELECT_query = str_replace("FROM","INTO $tabla$IN FROM");
+
+			$query .= $this->SELECT_query;
+			$query .= $this->WHERE_query;
+			$query .= $this->GROUPBY_query;
+			$query .= $this->ORDERBY_query;
+			$query .= ";";
+		}
+		return $query;
+	}
+
 	public function macroBinds(){
 		return $this->WHERE_binds;
 	}
@@ -251,6 +308,22 @@ class SQL{
 		}
 
 		return $table_fields;
+	}
+	public function TABLES(){
+		$con = &$this->con;
+		$tables = &$this->dbTables;
+
+		if( sizeof($tables)==0 ){
+			try{
+				$q = $con['handler']->prepare("SHOW TABLES ");
+				$q->execute();
+				$tables = $q->fetchAll(PDO::FETCH_COLUMN);
+				}catch(Exception $e){
+				$this->error("* Error en SHOW TABLES.", $e);
+			}
+		}
+
+		return $tables;
 	}
 	public function DESCRIBEID(){
 		$fields = $this->DESCRIBE();
@@ -309,8 +382,10 @@ class SQL{
 
 	public function SELECT($fields = NULL, $mask = NULL){
 		$table = &$this->table;
+		$tables = &$this->tables;
 		$query = &$this->SELECT_query;
 
+		$tables = [$table];
 		$query = "";
 		if(is_null($fields)){
 			$selection = "*";
@@ -520,7 +595,6 @@ class SQL{
 		# Query statistics
 		$startT = microtime(true); // Measure time
 		$startM = memory_get_usage(); // Measure memory
-		if($this->SELECT_query==""){$this->SELECT();}
 		try{
 			# Execution and handling
 			$this->buildQuery();
@@ -562,6 +636,21 @@ class SQL{
 			$this->datos = json_decode($data);
 		}
 	}
+
+	public function get($all=False){
+		if($all){
+			$datos['status'] = &$this->status;
+			$datos['message'] = &$this->message;
+			$datos["data"] = &$this->datos;
+		}else{
+			$datos = &$this->datos;
+		}
+		return $datos;
+	}
+	public function getOne(){
+		return $this->datos[0];
+	}
+
 	public function json($show=True,$isJSON=True){
 		$datos['status'] = $this->status;
 		$datos['message'] = $this->message;
@@ -608,21 +697,145 @@ class SQL{
 		return $table;
 	}
 }
+class Q{
+	public static function validKey($key){
+		$valid = True;
+		$black = ["'",'"',"%","&","=","!","|","¡","/",":",";"];
+		$chars = str_split($key);
+		foreach($char as $c){
+			if(in_array($c,$black)){$valid = False; break;}
+		}
+		return $valid;
+	}
 
-$con = SQL_Connection::Qconnect("mkti.mx","ventallanta","grupollancarsa","Grupollancarsa22",$debugging);
+	public static function CONNECT($host,$database,$user,$password,$debugging = False,$type="mysql",$path=""){
+		//$type = [mysql,mssql,sybase,sqlite]
+    $status = True;
+    //Try to connect
+    try {
+      //$PDOstring = "$type:host=$host;dbname=$database;";if($type="sqlite"){$PDOstring = "$type:$path;";}
+			$con['handler'] = new PDO("mysql:host=$host;dbname=$database;", $user, $password,
+		  array(PDO::MYSQL_ATTR_INIT_COMMAND => 'SET NAMES utf8'));
 
-$PRUEBA = new SQL($con,"prueba");
+  	  if($debugging){
+  	  	$con['handler']->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING );//Debugging
+  	  }else{
+  		  $con['handler']->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION );//Final
+  	  }
+  	}
+  	catch(PDOException $e) {
+      $status = False;
+      $con['handler'] = NULL;
+  		$message = "* Error al conectar a la base de datos: ".$e->getMessage()."<br />";
+      self::alert($message);
+  	}
 
-$PRUEBA->SELECT( ["id_prueba","activo"] );
-$PRUEBA->AVG(["numero","activo"]);
-$PRUEBA->MAX(["numero","activo"]);
-$PRUEBA->MIN(["numero","activo"]);
-$PRUEBA->COUNT(["numero","activo"]);
-$PRUEBA->GROUPBY( ["nombre"] );
+    return $con;
+	}
 
-$PRUEBA->ORDERBY( array("nombre"=>"DESC","activo"=>"DESC") );
+	public static function FREE($con,$query,$binds = array(), $fetch = True, $indexFirst = True){
+		$datos["status"] = True;
+		$datos["message"] = "";
+		$datos["data"] = array();
 
+		try{
+			$q['handle'] = $con['handler']->prepare($query);
+
+			if($fetch){
+					$q['handle']->setFetchMode(PDO::FETCH_ASSOC);
+					$q['handle']->execute( $binds );
+					$c = 0;
+					while( $row=$q['handle']->fetch() ) {
+						foreach($row as $f => $v){
+							if($indexFirst){
+								$datos["data"][$c][$f] = $v;
+								}else{
+								$datos["data"][$f][$c] = $v;
+							}
+						}
+						$c++;
+					}
+			}else{
+					$q['handle']->execute( $binds );
+			}
+
+		}catch (Exception $e){
+			$datos["status"] = False;
+			$datos["message"] = "Error en comando FREE. ".$e->getMessage();
+		}
+
+		return $datos;
+	}
+
+	public static function NEWVIEW($con,$viewname,$query,$binds = array() ){
+		$viewquery = "CREATE OR REPLACE VIEW $viewname AS $query ";
+		$r = self::FREE($con,$viewquery,$binds, $fetch = False);
+		return $r['status'];
+	}
+	public static function DROPVIEW($con,$viewname){
+		$viewquery = "DROP VIEW IF EXISTS $viewname ";
+		$r = self::FREE($con,$viewquery, array() , $fetch = False);
+		return $r['status'];
+	}
+	public static function INTO($con, $tabla, $query, $binds = array(), $IN = ""){
+		$r['status'] = False;
+
+		if( self::validKey($tabla) and self::validKey($IN) ){
+			$IN = ($IN == "") ? "" : "IN '$IN'";
+			$query = str_replace("FROM","INTO $tabla$IN FROM");
+			$r = self::FREE($con, $query, $binds, $fetch = False);
+		}
+		return $r['status'];
+	}
+
+	public static function json($datos,$show=True,$isJSON=True){
+		if($isJSON){header('Content-Type: application/json');}
+		$json = json_encode($datos, JSON_PRETTY_PRINT );
+		if($show){echo $json;}
+		return $json;
+	}
+	public static function show($datos,$show=True,$indexFirst = True){
+		$datos = ( isset($datos['data']) ) ? $datos['data'] : $datos;
+
+		$IF = $indexFirst;
+		if(sizeof($datos)!=0){
+			if($IF){
+				$lines = array_keys($datos);
+				$fields = array_keys($datos[$lines[0]]);
+				}else{
+				$fields = array_keys($datos);
+				$lines = array_keys($datos[$lines[0]]);
+			}
+
+			$table = "";
+			$table .= '<table class="phptable">';
+
+				$table .= '<tr style="background-color: black; color: white;">';
+				foreach($fields as $f){$table .="<td>$f</td>";}
+				$table .= "</tr>";
+
+					foreach($lines as $c){
+						$table .= "<tr>";
+						foreach($fields as $f){
+							$value = ($IF) ? $datos[$c][$f] : $datos[$f][$c];
+							$table .="<td>".$value."</td>";
+						}
+						$table .= "</tr>";
+					}
+
+			$table .= "</table>";
+		}else{
+			$table = '</br><div style="font-size:20px; color: red;">Tabla vacía.</div></br>';
+		}
+
+		if($show){echo $table;}
+		return $table;
+	}
+}
+
+$con = Q::CONNECT("mkti.mx","ventallanta","grupollancarsa","Grupollancarsa22",$debugging);
+$PRUEBA = new SQL($con,"v_prueba");
 $PRUEBA->EXECUTE();
-echo $PRUEBA->QUERY;
 $PRUEBA->show();
+
 ?>
