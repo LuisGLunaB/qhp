@@ -1,14 +1,14 @@
 <?php
 class ErrorManager{
-	Public $status = True;
 	Public $debugging = False;
-	Public $message = "";
+	Protected $status = True;
+	Protected $message = "";
 
 	public function __construct(){
 		$this->matchGlobalDebuggingStatus();
 	}
 
-	public function matchGlobalDebuggingStatus(){
+	private function matchGlobalDebuggingStatus(){
 		if( isset($GLOBALS["debugging"]) ){
 			$this->debugging = $GLOBALS["debugging"];
 		}
@@ -32,4 +32,13 @@ class ErrorManager{
 	public function showErrorMessage(){
 		echo $this->errorMessage;
 	}
+	//public function alertErrorMessage(){}
+
+	public function getStatus(){
+		return $this->status;
+	}
+	public function getMessage(){
+		return $this->message;
+	}
+
 }
