@@ -33,4 +33,5 @@ function EqualReferences(&$first, &$second){
 
 include_once("./SQLConnector.php");
 include_once("./SQLBasicTableManager.php");
+include_once("./SQLBasicSelector.php");
 include_once("./ErrorManager.php");

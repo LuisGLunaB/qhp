@@ -1,129 +1,89 @@
 <?php
 
-class SQLBasicTableManager{
-  Protected $con = NULL; #SQLConnector->Connection
-  Protected $Query = NULL;
+class SQLBasicSelector extends SQLBasicTableManager{
+  public $SELECT_query = "";
+  public $commaSeparatedFields = "";
 
-  public $DatabaseTablesNames = NULL;
-
-  public $TableName = ""; #Or View's Name
-  public $TableFields = NULL;
-  public $maskedFields = [];
-  public $fieldsMask = NULL;
-
-  Protected $ErrorManager;
+  public $WHERE = NULL; # WHEREObject
+  public $WHERE_query = "";
 
   public function __construct($con, $TableName, array $fieldsMask = NULL ){
-    $this->ErrorManager = new ErrorManager();
-    $this->con = $con;
-    $this->TableName = $TableName;
-    $this->fieldsMask = $fieldsMask;
-
+    parent::__construct($con,$TableName,$fieldsMask);
+    $this->buildSELECT();
+  }
+  public function buildSELECT(){
+    $this->getCommaSeparatedFields();
+    $this->SELECT();
+  }
+  public function SELECT(){
     if( $this->isFieldsMaskOn() ){
-      $this->maskFields();
-    }
-
-  }
-
-  public function getTableFields( $reloadFields = False ){
-		if( $this->isTableFieldsNULL() or $reloadFields==True ){
-      $this->DESCRIBE();
-		}
-		return $this->TableFields;
-  }
-  public function getTableId( $reloadFields = False ){
-    $this->getTableFields( $reloadFields );
-    return $this->TableFields[0];
-  }
-  protected function DESCRIBE(){
-    try{
-      $this->Query = $this->con['handler']->prepare("DESCRIBE $this->TableName ");
-      $this->Query->execute();
-      $this->TableFields = $this->Query->fetchAll(PDO::FETCH_COLUMN);
-    }catch(Exception $e){
-      $this->ErrorManager->handleError("Error in DESCRIBE $this->TableName.", $e );
-    }
-    return $this->TableFields;
-  }
-
-  protected function maskFields(){
-    if( $this->isFieldsMaskOn() ){
-      $this->maskedFields = self::maskArray( $this->fieldsMask, $this->getTableFields() );
+      $this->SELECT_query = "SELECT $this->commaSeparatedFields FROM $this->TableName ";
     }else{
-      $this->maskedFields = $this->getTableFields();
+      $this->SELECT_query = "SELECT * FROM $this->TableName ";
     }
   }
-  public function updateFieldsMask( array $newMask ){
-    $this->fieldsMask = $newMask;
+  public function getCommaSeparatedFields(){
     $this->maskFields();
-  }
-  public function deleteFieldsMask(){
-    $this->fieldsMask = NULL;
-    $this->maskFields();
-  }
-  protected function isFieldsMaskOn(){
-    return !is_null($this->fieldsMask);
-  }
-  public static function maskArray(array $maskArray, array $validKeysArray){
-    $maskedArray = [];
-    foreach($maskArray as $key){
-      if( in_array($key,$validKeysArray) ){
-        $maskedArray[] = $key;
-      }
-    }
-    return $maskedArray;
-  }
-  public static function maskAssocArray(array $maskAssocArray, array $validKeysArray){
-    $maskedArray = array();
-    foreach($maskAssocArray as $key => $value ){
-      if( in_array($key,$validKeysArray) ){
-        $maskedArray[$key] = $value;
-      }
-    }
-    return $maskedArray;
+    $this->commaSeparatedFields = implode(", ", $this->maskedFields );
   }
 
-  public function retrieveDatabaseTablesNames( $reloadFields = False ){
-    if( $this->isTablesNamesNULL() or $reloadFields==True ){
-      $this->TABLES();
-		}
-		return $this->DatabaseTablesNames;
+  public function WHERE( array $assocWhere, $symbol = "=" ){
+    # Create WHERE Object if necessary
+    if( is_null($this->WHERE) ){
+      $this->WHERE = new WHEREObject();
+    }
+
+    # Mask Where with valid Table Fields
+    $this->getTableFields();
+    $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->TableFields);
+
+    # Build Where and return it to this objects as a String.
+    $this->WHERE->buildWhere($maskedAssocWhere, $symbol);
+    $this->WHERE_query = $this->WHERE->get();
+    return $this->WHERE_query;
   }
-	protected function TABLES(){
-		try{
-			$this->Query = $this->con['handler']->prepare("SHOW TABLES ");
-			$this->Query->execute();
-			$this->DatabaseTablesNames = $this->Query->fetchAll(PDO::FETCH_COLUMN);
-		}catch(Exception $e){
-			$this->ErrorManager->handleError("Error in SHOW TABLES.", $e );
-		}
-		return $this->DatabaseTablesNames;
-	}
-  public function isValidTable(){
-    return in_array( $this->TableName, $this->retrieveDatabaseTablesNames(True) );
-  }
-  public function assertValidTable(){
-    try{
-      if( !$this->isValidTable() ){
-        throw new Exception("#Custom exception in assertValidTable.");
-      }
-    } catch (Exception $e){
-      $this->ErrorManager->handleError("Table $this->TableName is not in the Database.", $e );
+
+}
+
+class WHEREObject{
+  public $query = "";
+  public $queryElements = [];
+  public $binds = array();
+  protected $WhereCounter = 0;
+
+  public function __construct(array $assocWhere = NULL, $symbol = "="){
+    if( !is_null($assocWhere) ){
+      $this->buildWhere($assocWhere, $symbol);
     }
   }
 
-  protected function isTableFieldsNULL(){
-    return is_null($this->TableFields);
+  public function buildWhere( array $assocWhere, $symbol = "=" ){
+    foreach($assocWhere as $key => $value){
+      $bindName = ":where$this->WhereCounter";
+      $this->queryElements[] = "$key $symbol $bindName";
+      $this->binds[$bindName] = $value;
+      $this->WhereCounter++;
+    }
   }
-  protected function isTablesNamesNULL(){
-    return is_null($this->DatabaseTablesNames);
+  public function buildWhereEquals( array $assocWhere ){
+    $this->buildWhere($assocWhere, "=");
   }
 
-  public function status(){
-    return $this->ErrorManager->getStatus();
+  public function clearWhere(){
+    $this->query = "";
+    $this->queryElements = [];
+    $this->binds = array();
+    $this->WhereCounter = 0;
   }
-  public function message(){
-    return $this->ErrorManager->getMessage();
+
+  protected function hasQueryElements(){
+    return ( sizeof($this->queryElements)!=0 );
+  }
+  public function get(){
+    if( $this->hasQueryElements() ){
+      $this->query = "WHERE " . implode(" AND ", $this->queryElements ) . " ";
+    }
+    return $this->query;
   }
 
 }
@@ -168,61 +128,8 @@ class SQL{
 	public $n = 0;
 	public $isEmpty = True;
 
-	public function __construct($con,$table,$data=NULL){
-		global $debugging;
-		if(!isset($debugging)){$debugging = False;}
-		if(!is_null($data)){$this->setData($data);}
 
-		$this->debugging = $debugging;
-		$this->con = $con;
-		$this->table = $table;
-		$this->tables = [$table];
-	}
-	public static function alert($text, $debugging = False){
-		if($text!=""){
-			if($debugging){echo "<script>alert('BackEnd: $text')</script>";}
-			echo "BackEnd: $text </br>";
-		}
-  }
-	public function error($text, $e=NULL){
-		$debugging = &$this->debugging;
-		$hidden = "";
-		if( (!is_null($e)) and ($debugging) ){$hidden = $e->getMessage();}
-		$this->message = "$text $hidden";
-		self::alert( $text, $debugging );
-	}
-	public static function mask($data,$mask){
-		$associative = is_assoc($data);
 
-		if($associative){
-			$masked = array();
-			foreach($data as $key => $value){
-				if(in_array($key,$mask)){
-					$masked[$key] = $value;
-				}
-			}
-		}else{
-			$masked = [];
-			foreach($data as $key){
-				if(in_array($key,$mask)){
-					$masked[] = $key;
-				}
-			}
-		}
-
-		return $masked;
-	}
-	public static function multimask($data,$mask){
-		$c = 0;
-		$r = array();
-		foreach($data as $row){
-			foreach($mask as $key){
-				$r[$c][$key] = $data[$c][$key];
-			}
-			$c++;
-		}
-		return $r;
-	}
 	public static function binding(&$binds,$data,$text = NULL,$posttext="",$init = 0){
 		$associative = is_assoc($data);
 		$nulltext = is_null($text);
@@ -264,15 +171,7 @@ class SQL{
 		}
 		return $binds;
 	}
-	public static function validKey($key){
-		$valid = True;
-		$black = ["'",'"',"%","&","=","!","|","¡","/",":",";"];
-		$chars = str_split($key);
-		foreach($char as $c){
-			if(in_array($c,$black)){$valid = False; break;}
-		}
-		return $valid;
-	}
+
 	public function buildQuery(){
 		$query = &$this->QUERY;
 		$query = "";
@@ -334,42 +233,6 @@ class SQL{
 		return $q;
 	}
 
-	public function DESCRIBE(){
-		$con = &$this->con;
-		$table = &$this->table;
-		$table_fields = [];
-
-		if(is_null($this->FIELDS)){
-			try{
-				$q = $con['handler']->prepare("DESCRIBE $table ");
-				$q->execute();
-				$table_fields = $q->fetchAll(PDO::FETCH_COLUMN);
-				$this->FIELDS = $table_fields;
-				}catch(Exception $e){
-				$this->error("* Error en DESCRIBE $table.", $e);
-			}
-		}else{
-			$table_fields = $this->FIELDS;
-		}
-
-		return $table_fields;
-	}
-	public function TABLES(){
-		$con = &$this->con;
-		$tables = &$this->dbTables;
-
-		if( sizeof($tables)==0 ){
-			try{
-				$q = $con['handler']->prepare("SHOW TABLES ");
-				$q->execute();
-				$tables = $q->fetchAll(PDO::FETCH_COLUMN);
-				}catch(Exception $e){
-				$this->error("* Error en SHOW TABLES.", $e);
-			}
-		}
-
-		return $tables;
-	}
 	public function DESCRIBEID(){
 		$fields = $this->DESCRIBE();
 		$this->IDFIELD = $fields[0];
