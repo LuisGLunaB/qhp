@@ -3,6 +3,7 @@ class ErrorManager{
 	Public $debugging = False;
 	Protected $status = True;
 	Protected $message = "";
+	Protected $exitExecution = False;
 
 	public function __construct(){
 		$this->matchGlobalDebuggingStatus();
@@ -16,21 +17,32 @@ class ErrorManager{
 	public function weAreDebugging(){
 		return $this->debugging;
 	}
-	public function handleError($message, $e, $exitExecution = True){
+	public function handleError($message, $e, $exitExecution = NULL ){
 		$this->errorMessage = $message;
 		$this->status = False;
 
 		if( $this->weAreDebugging() ){
 			$this->errorMessage .= " ".$e->getMessage();
-			$this->showErrorMessage();
+			$this->alertErrorMessage();
 		}
 
-		if($exitExecution){
+		$this->shouldExecutionEnd( $exitExecution );
+	}
+
+	protected function shouldExecutionEnd( $exitExecution ){
+		if( !is_null($exitExecution) ){
+			$this->exitExecution = $exitExecution;
+		}
+		if( $this->exitExecution ){
 			exit;
 		}
 	}
+
 	public function showErrorMessage(){
 		echo $this->errorMessage;
+	}
+	public function alertErrorMessage(){
+		echo printf("<script>alert('%s');</script>", $this->errorMessage);
 	}
 	//public function alertErrorMessage(){}
 

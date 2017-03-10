@@ -4,10 +4,13 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("mkti.mx","ricardovertiz","ricardovertiz","ricardovertiz22");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	$PRUEBA = new SQLBasicSelector($con,"blog", ["id","a","titulo"] );
-	$PRUEBA->WHERE( array("id"=>1,"titulo"=>2) );
+	$PRUEBA = new SQLBasicSelector($con,"blog",["id"]);
+	$PRUEBA->WHEREID( 20 );
+	$PRUEBA->execute();
+
 	print_r($PRUEBA->SELECT_query);
 	print_r($PRUEBA->WHERE_query);
+	print_r( $PRUEBA->data );
 	/*
 	$PRUEBA = new SQL($con,"blog");
 	$PRUEBA->SELECT( ["id"]);
@@ -16,6 +19,7 @@ if( $SQLConnection->status() ){
 }else{
 	echo $SQLConnection->message();
 }
+
 
 
 

@@ -1,16 +1,27 @@
 <?php
 
 class SQLBasicSelector extends SQLBasicTableManager{
-  public $SELECT_query = "";
+  public $COMPLETE_query = ""; # Complete query to be executed
+
+  public $SELECT_query = ""; # Just the first row of the query
   public $commaSeparatedFields = "";
 
   public $WHERE = NULL; # WHEREObject
   public $WHERE_query = "";
 
+  public $data = array();
+
+  # Performance Statistics
+  public $DataSize = 0; # in MB
+  public $ExecutionTime = 0; # in Seconds
+  public $BuildTime = 0; # in Seconds
+  public $TotalTime = 0; # in Seconds
+
   public function __construct($con, $TableName, array $fieldsMask = NULL ){
     parent::__construct($con,$TableName,$fieldsMask);
     $this->buildSELECT();
   }
+
   public function buildSELECT(){
     $this->getCommaSeparatedFields();
     $this->SELECT();
@@ -27,20 +38,138 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->commaSeparatedFields = implode(", ", $this->maskedFields );
   }
 
-  public function WHERE( array $assocWhere, $symbol = "=" ){
+  public function WHERE( array $assocWhere, $fieldsMask = NULL, $symbol = "=" ){
+    /* This method is not refactored in order to keep all the coupling to
+    the WHEREObject in a single place. */
+
     # Create WHERE Object if necessary
     if( is_null($this->WHERE) ){
       $this->WHERE = new WHEREObject();
     }
 
     # Mask Where with valid Table Fields
-    $this->getTableFields();
-    $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->TableFields);
+    if( is_null($fieldsMask) ){
+      $this->getTableFields();
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->TableFields);
+    }else{
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
+    }
 
     # Build Where and return it to this objects as a String.
     $this->WHERE->buildWhere($maskedAssocWhere, $symbol);
     $this->WHERE_query = $this->WHERE->get();
     return $this->WHERE_query;
+  }
+  public function GREATER( array $assocWhere, $fieldsMask = NULL ){
+    return $this->WHERE( $assocWhere, $fieldsMask, $symbol=">");
+  }
+  public function LOWER( array $assocWhere, $fieldsMask = NULL ){
+    return $this->WHERE( $assocWhere, $fieldsMask, $symbol="<");
+  }
+  public function GREATER_EQUAL( array $assocWhere, $fieldsMask = NULL ){
+    return $this->WHERE( $assocWhere, $fieldsMask, $symbol=">=");
+  }
+  public function LOWER_EQUAL( array $assocWhere, $fieldsMask = NULL ){
+    return $this->WHERE( $assocWhere, $fieldsMask, $symbol="<=");
+  }
+  public function WHEREID( $id ){
+    $id = (int) $id;
+    $this->getTableFields();
+    $idField = $this->TableFields[0];
+    return $this->WHERE( array($idField=>$id), [$idField] );
+  }
+  //public function IN(){
+  public function whereExists(){
+    return ( !is_null($this->WHERE) );
+  }
+
+  public function execute(){
+    $this->data = array();
+
+    $this->recordStatistics("START");
+    $this->tryToExecuteQuery();
+
+    $this->recordStatistics("BUILD");
+		$this->buildArrayFromExecution();
+
+    $this->recordStatistics("STOP");
+
+		return $this->data;
+  }
+
+  protected function tryToExecuteQuery(){
+    try{
+			$this->Query = $this->con['handler']->prepare( $this->getQuery() );
+			$this->Query->setFetchMode(PDO::FETCH_ASSOC);
+			$this->Query->execute( $this->getBinds() );
+    }catch (Exception $e){
+      $this->ErrorManager->handleError("Error in SELECT $this->TableName.", $e );
+		}
+  }
+  public function getQuery(){
+    $this->COMPLETE_query = $this->SELECT_query . " " . $this->WHERE_query;
+    return $this->COMPLETE_query;
+  }
+  public function getBinds(){
+    if( $this->whereExists() ){
+      return $this->WHERE->binds;
+    }else {
+      return array();
+    }
+  }
+  protected function buildArrayFromExecution(){
+    if( $this->status() ){
+      $row = 0;
+      while( $QueryRow=$this->Query->fetch() ){
+        $QueryFields = ($row==0) ? array_keys($QueryRow) : $QueryFields;
+        foreach($QueryFields as $field){
+          $this->data[$row][$field] = $QueryRow[$field];
+        } //foreach
+        $row++;
+      } //while fetching
+    } //if status
+  }
+  protected function recordStatistics($command){
+    if($command=="START"){
+      $this->ExecutionTime = microtime(true);
+    }
+
+    if($command=="BUILD"){
+      $this->ExecutionTime = microtime(true) - $this->ExecutionTime ;
+      $this->BuildTime = microtime(true);
+      $this->DataSize = memory_get_usage();
+    }
+
+    if($command=="STOP"){
+      $this->BuildTime = microtime(true) - $this->BuildTime ;
+  		$this->DataSize = (memory_get_usage() - $this->DataSize )/10000000;
+      $this->TotalTime = ($this->ExecutionTime + $this->BuildTime);
+    }
+  }
+
+  public function hasData(){
+    return ( $this->rowSize() > 0 );
+  }
+  public function rowSize(){
+    return sizeof($this->data);
+  }
+  public function columnSize(){
+    return sizeof( $this->getFields() );
+  }
+  public function getFields(){
+    if( $this->hasData() ){
+      return array_keys( $this->data[0] );
+    }else {
+      return [];
+    }
+  }
+
+  public function getStatistics(){
+    $x["DataSize"] = $this->DataSize;
+    $x["ExecutionTime"] = $this->ExecutionTime;
+    $x["BuildTime"] = $this->BuildTime;
+    $x["TotalTime"] = $this->TotalTime;
+    return $x;
   }
 
 }
@@ -65,10 +194,6 @@ class WHEREObject{
       $this->WhereCounter++;
     }
   }
-  public function buildWhereEquals( array $assocWhere ){
-    $this->buildWhere($assocWhere, "=");
-  }
-
   public function clearWhere(){
     $this->query = "";
     $this->queryElements = [];
@@ -88,47 +213,8 @@ class WHEREObject{
 
 }
 
-/*
+
 class SQL{
-	public $con = NULL;
-	public $debugging = False;
-	public $q = NULL;
-	public $table = "";
-	public $tables = [];
-	public $status = True;
-	public $message = "";
-	public $dbTables = [];
-
-	public $FIELDS = NULL;
-	public $SELECTFIELDS = [];
-	public $IDFIELD = NULL;
-
-	public $datos = array();
-	public $LIMIT = 50;
-	public $OFFSET = 0;
-	public $PAGENUMBER = 0;
-
-	public $QUERY = "";
-	public $SELECT_query = "";
-	public $SELECT_binds = array();
-	public $WHERE_query = "";
-	public $WHERE_binds = array();
-	public $WHERE_count = 0;
-	public $INSERT_query = "";
-	public $INSERT_binds = array();
-	public $GROUPBY_query = "";
-	public $ORDERBY_query = "";
-	public $PAGE_query = "";
-
-	public $last = 0;
-	public $indexFirst = True;
-	public $time = 0;
-	public $memory = 0;
-	public $m = 0;
-	public $n = 0;
-	public $isEmpty = True;
-
-
 
 	public static function binding(&$binds,$data,$text = NULL,$posttext="",$init = 0){
 		$associative = is_assoc($data);
@@ -347,6 +433,7 @@ class SQL{
 
 		return $query;
 	}
+
 	public function COUNT($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("COUNT",$fields,$mask,$isDistinc);
 	}
@@ -365,78 +452,12 @@ class SQL{
 	public function LENGTH($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("LENGTH",$fields,$mask,$isDistinc);
 	}
+  
 	public function UPPER($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("UPPER",$fields,$mask,$isDistinc);
 	}
 	public function LOWER($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("LOWER",$fields,$mask,$isDistinc);
-	}
-
-	public function WHERE($where, $mask = NULL, $symbol = "="){
-		$query = &$this->WHERE_query;
-		$binds = &$this->WHERE_binds;
-		$count = &$this->WHERE_count;
-		$binds = ($query=="") ? array() : $binds;
-		$count = ($query=="") ? 0 : $count;
-		$query = ($query=="") ? "WHERE" : $query;
-
-		$validSymbols = ["=","<",">","<=",">=","LIKE","IN","BETWEEN"];
-		$symbol = ( in_array($symbol,$validSymbols) ) ? $symbol : "=";
-		$mask = (is_null($mask)) ? $this->DESCRIBE() : $mask;
-		$where = self::mask($where,$mask);
-
-		if( sizeof($where)>0 ){
-			$posttext = "_where$count";
-			self::binding($binds,$where,NULL,$posttext);
-			$keys = array_keys($where);$keystext = "";
-			$AND = ( $query=="WHERE" ) ? "" : "AND";
-			foreach($keys as $key){
-				$keystext .= "$AND $key $symbol ";
-
-				if(!is_array($where[$key])){
-					$keystext .= ":$key$posttext ";
-				}else{
-					$binded = []; $i = 0;
-					foreach($where[$key] as $v){$binded[] = ":$key$posttext"."_$i"; $i++;}
-					$keystext .= "( " . implode(", ",$binded) . " ) ";
-				}
-
-				$AND = "AND";
-			}
-			$query .= $keystext;
-		}
-		$count++;
-		return $query;
-	}
-	public function BETWEEN($where,$mask=NULL,$inclusive=True){
-		if(is_bool($mask)){$inclusive = $mask;$mask = NULL;}
-		$lower = array(); $upper = array();
-		foreach($where as $key => $value){
-			$lower[$key] = $value[0];
-			$upper[$key] = $value[1];
-		}
-		$symbol = ($inclusive) ? "<=" : "<";
-		$this->WHERE($lower,$mask,">=");
-		return $this->WHERE($upper,$mask,$symbol);
-	}
-	public function GREATER($where,$mask=NULL,$inclusive=True){
-		if(is_bool($mask)){$inclusive = $mask;$mask = NULL;}
-		$symbol = ($inclusive) ? ">=" : ">";
-		return $this->WHERE($where,$mask,$symbol);
-	}
-	public function LESSER($where,$mask=NULL,$inclusive=True){
-		if(is_bool($mask)){$inclusive = $mask;$mask = NULL;}
-		$symbol = ($inclusive) ? "<=" : "<";
-		return $this->WHERE($where,$mask,$symbol);
-	}
-	public function IN($where,$mask=NULL){
-		return $this->WHERE($where,$mask,"IN");
-	}
-	public function WHEREID($id){
-		$id = (int) $id;
-		$field = $this->DESCRIBEID();
-		$this->WHERE( array( $field => $id), [$field] );
-		return $this->EXECUTE();
 	}
 
 	public function GROUPBY($fields = NULL, $mask = NULL){
@@ -491,52 +512,6 @@ class SQL{
 		return $query;
 	}
 
-	public function EXECUTE(&$q = NULL){
-		# Reference $q properly
-		if(is_null($q)){$q = &$this->q;}
-		$con = &$this->con;
-		$this->status = True;
-		$datos = &$this->datos;
-		$datos = array();
-		$fields = &$this->SELECTFIELDS;
-
-		# Query statistics
-		$startT = microtime(true); // Measure time
-		$startM = memory_get_usage(); // Measure memory
-		try{
-			# Execution and handling
-			$this->buildQuery();
-			$macroBinds = $this->macroBinds();
-			$q['handle'] = $con['handler']->prepare($this->QUERY);
-			$q['handle']->setFetchMode(PDO::FETCH_ASSOC);
-			//$this->buildBinder($q);
-			$q['handle']->execute( $macroBinds );
-			//echo $this->QUERY;print_r($macroBinds);
-			# Turn data into Array
-			$c = 0;
-			while( $row=$q['handle']->fetch() ) {
-				foreach($fields as $f){
-					if($this->indexFirst){
-						$datos[$c][$f] = $row[$f];
-						}else{
-						$datos[$f][$c] = $row[$f];
-					}
-				}
-				$c++;
-			}
-		}catch (Exception $e){
-			$this->status = False;
-			$this->error("* Error en EXECUTE.", $e);
-		}
-		# Query statistics
-		$this->time = microtime(true) - $startT;
-		$this->memory = (memory_get_usage() - $startM)/10000000;
-		$this->m = $c;
-		$this->n = sizeof($fields);
-		$this->isEmpty = ($c==0) ? True : False;
-
-		return $datos;
-	}
 	public function setData($data){
 		if(is_array($data)){
 			$this->datos = $data;
@@ -721,4 +696,3 @@ class pending{
 		return $table;
 	}
 }
-*/
