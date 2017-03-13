@@ -4,8 +4,8 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("mkti.mx","ricardovertiz","ricardovertiz","ricardovertiz22");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	$PRUEBA = new SQLBasicSelector($con,"blog",["id"]);
-	$PRUEBA->WHEREID( 20 );
+	$PRUEBA = new SQLBasicSelector($con,"blog",["id","titulo"]);
+	$PRUEBA->WHEREID( [20,22,25] );
 	$PRUEBA->execute();
 
 	print_r($PRUEBA->SELECT_query);

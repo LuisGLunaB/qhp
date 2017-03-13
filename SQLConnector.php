@@ -3,10 +3,10 @@
 class SQLConnector{
 	Protected $Connection = NULL;
 
-	Protected $DatabaseHost = NULL;
-	Protected $DatabaseName = NULL;
-	Protected $Username = NULL;
-	Protected $Password = NULL;
+	Protected $DatabaseHost = "";
+	Protected $DatabaseName = "";
+	Protected $Username = "";
+	Protected $Password = "";
 
 	Protected $ErrorManager;
 
@@ -17,23 +17,23 @@ class SQLConnector{
 			$this->createNewConnection();
 		}
 	}
-
 	public function setConnectionVariables($DatabaseHost,$DatabaseName,$Username,$Password){
 		$this->DatabaseHost = $DatabaseHost;
 		$this->DatabaseName = $DatabaseName;
 		$this->Username = $Username;
 		$this->Password = $Password;
 	}
+
 	public function getConnector(){
 		$this->assertOpenConnection();
 		return $this->Connection;
 	}
-	private function isConnectionDataComplete(){
+	Protected function isConnectionDataComplete(){
 		return (
-			!is_null($this->DatabaseHost) and
-			!is_null($this->DatabaseName) and
-			!is_null($this->Username) and
-			!is_null($this->Password)
+			($this->DatabaseHost !="" ) and
+			($this->DatabaseName !="" ) and
+			($this->Username !="" ) and
+			($this->Password !="" )
 		);
 	}
 
@@ -45,7 +45,7 @@ class SQLConnector{
 
     return $this->getConnector();
 	}
-	private function createConnectionHandler(){
+	Protected function createConnectionHandler(){
 		try{
 			$this->Connection['handler'] =
 				new PDO(
@@ -59,7 +59,7 @@ class SQLConnector{
 			$this->ErrorManager->handleError("Error when creating Connection Handler.", $e );
 		}
 	}
-	private function setPDOErrorMode(){
+	Protected function setPDOErrorMode(){
 		try {
 			if( $this->ErrorManager->weAreDebugging() ){
 				$this->Connection['handler']->setAttribute( PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING );

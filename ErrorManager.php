@@ -3,7 +3,7 @@ class ErrorManager{
 	Public $debugging = False;
 	Protected $status = True;
 	Protected $message = "";
-	Protected $exitExecution = False;
+	Public $exitExecution = False;
 
 	public function __construct(){
 		$this->matchGlobalDebuggingStatus();
@@ -26,16 +26,17 @@ class ErrorManager{
 			$this->alertErrorMessage();
 		}
 
-		$this->shouldExecutionEnd( $exitExecution );
+		$this->manageExecutionEnd( $exitExecution );
 	}
 
-	protected function shouldExecutionEnd( $exitExecution ){
+	protected function manageExecutionEnd( $exitExecution ){
 		if( !is_null($exitExecution) ){
 			$this->exitExecution = $exitExecution;
 		}
 		if( $this->exitExecution ){
 			exit;
 		}
+		return $this->exitExecution;
 	}
 
 	public function showErrorMessage(){

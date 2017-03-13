@@ -73,9 +73,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
     return $this->WHERE( $assocWhere, $fieldsMask, $symbol="<=");
   }
   public function WHEREID( $id ){
-    $id = (int) $id;
-    $this->getTableFields();
-    $idField = $this->TableFields[0];
+    $idField = $this->getTableId();
     return $this->WHERE( array($idField=>$id), [$idField] );
   }
   //public function IN(){
@@ -188,12 +186,22 @@ class WHEREObject{
 
   public function buildWhere( array $assocWhere, $symbol = "=" ){
     foreach($assocWhere as $key => $value){
-      $bindName = ":where$this->WhereCounter";
-      $this->queryElements[] = "$key $symbol $bindName";
-      $this->binds[$bindName] = $value;
-      $this->WhereCounter++;
+      $symbol = ( is_array($value) ) ? "IN" : $symbol;
+      $value = ( is_array($value) ) ? $value : [$value];
+
+      $bindNames = [];
+      foreach($value as $v){
+        $bindName = ":where$this->WhereCounter";
+        $this->binds[$bindName] = $v;
+        $bindNames[] = $bindName;
+        $this->WhereCounter++;
+      }
+
+      $bindNames = implode(", ", $bindNames);
+      $this->queryElements[] = "$key $symbol ( $bindNames )";
     }
   }
+
   public function clearWhere(){
     $this->query = "";
     $this->queryElements = [];
@@ -452,7 +460,7 @@ class SQL{
 	public function LENGTH($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("LENGTH",$fields,$mask,$isDistinc);
 	}
-  
+
 	public function UPPER($fields = NULL, $mask = NULL, $isDistinc = False){
 		return $this->OPERATION("UPPER",$fields,$mask,$isDistinc);
 	}
