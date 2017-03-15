@@ -1,19 +1,17 @@
 <?php
 include_once("./SQLModule.php");
-
-$SQLConnection = new SQLConnector("mkti.mx","ricardovertiz","ricardovertiz","ricardovertiz22");
+$SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	$PRUEBA = new SQLBasicSelector($con,"prueba");
-	//$PRUEBA->WHEREID( [20,22,25] );
-	//$PRUEBA->ORDERBY( array("id"=>"DESC") );
-	//$PRUEBA->PAGE( 0 );
+	$PRUEBA = new SQLBasicSelector($con,"productos", ["id","modelo","costo"]);
+	$PRUEBA->LOWER_EQUAL( array("id"=>10) );
+	$PRUEBA->ORDERBY( array("id"=>"DESC") );
 	$PRUEBA->execute();
 
-	//$PRUEBA->saveAsTable("prueba");
+	//$PRUEBA->saveAsTable("back_up");
 
-	echo $PRUEBA->getRawQuery();
-	print_r($PRUEBA->data);
+	//echo $PRUEBA->getRawQuery();
+	DISPLAY::asTable($PRUEBA->data);
 	/*
 	$PRUEBA = new SQL($con,"blog");
 	$PRUEBA->SELECT( ["id"]);

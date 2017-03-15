@@ -32,8 +32,7 @@ class SQLConnector{
 		return (
 			($this->DatabaseHost !="" ) and
 			($this->DatabaseName !="" ) and
-			($this->Username !="" ) and
-			($this->Password !="" )
+			($this->Username !="")
 		);
 	}
 

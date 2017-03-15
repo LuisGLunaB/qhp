@@ -231,9 +231,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
   }
 
   # OPERATIONS & GROUP BY: DISTINCT, COUNT, SUM, AVG, MAX, MIN, LENGTH, UPPER, LOWER
-  # DISPLAY::asJSON & DISPLAY::asTable & DISPLAY::asArray
   # VIEW: new, drop
-  # JOIN?
 }
 
 class SQLWhereObject{
@@ -297,5 +295,4 @@ class pending{
 			return False;
 		}
 	}
-
 }

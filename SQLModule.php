@@ -4,7 +4,7 @@ $debugging = True;
 if($debugging){
 	error_reporting(E_ALL);
 	ini_set('display_errors', 1);
-}else{
+	}else{
 	error_reporting(0);
 	ini_set('display_errors', 0);
 }
@@ -35,3 +35,4 @@ include_once("./SQLConnector.php");
 include_once("./SQLBasicTableManager.php");
 include_once("./SQLBasicSelector.php");
 include_once("./ErrorManager.php");
+include_once("./DISPLAY.php");

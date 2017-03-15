@@ -91,7 +91,7 @@ class SQLBasicTableManager{
   }
   public static function isSafeSQLString($string){
   	$isValid = True;
-    $forbiddenCharacters = ["'",'"',"%","&","=","!","|","¡","/",":",";"];
+    $forbiddenCharacters = ["'",'"',"%","&","=","!","|","¡","/",":",";","-"];
   	$Characters = str_split($string);
   	foreach($Characters as $char){
   		if( in_array($char,$forbiddenCharacters) ){
