@@ -3,14 +3,18 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	$PRUEBA = new SQLBasicSelector($con,"productos", ["id","modelo","costo"]);
-	$PRUEBA->LOWER_EQUAL( array("id"=>10) );
-	$PRUEBA->ORDERBY( array("id"=>"DESC") );
+	$PRUEBA = new SQLSummarySelector($con,"productos", ["id","rin"]);
+	$PRUEBA->UPPERCASE( ["marca"], "");
+	$PRUEBA->COUNT( ["pmenudeo"] );
+	$PRUEBA->AVG( ["pmenudeo"] );
+	$PRUEBA->STD( ["pmenudeo"] );
+	$PRUEBA->GROUPBY( ["marca","rin"]);
+	//$PRUEBA->PAGE( 0 );
+	$PRUEBA->LOWER_EQUAL( array("id"=>100) );
+	$PRUEBA->ORDERBY( array("marca"=>"ASC","rin"=>"DESC") );
 	$PRUEBA->execute();
 
-	//$PRUEBA->saveAsTable("back_up");
-
-	//echo $PRUEBA->getRawQuery();
+	echo $PRUEBA->getRawQuery();
 	DISPLAY::asTable($PRUEBA->data);
 	/*
 	$PRUEBA = new SQL($con,"blog");

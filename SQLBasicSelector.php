@@ -10,9 +10,10 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public $WHERE_query = "";
 
   public $ORDERBY_query = "";
+  public $maskORDERBY = True;
 
   public $PAGINATION_query = "";
-  protected $LIMIT = 5;
+  protected $LIMIT = 30;
   protected $PAGE = 0;
 
   public $FREE_query = "";
@@ -89,7 +90,9 @@ class SQLBasicSelector extends SQLBasicTableManager{
   }
 
   public function ORDERBY( $assocArray ){
-    $assocArray = self::maskAssocArray( $assocArray, $this->getTableFields() );
+    if($this->maskORDERBY){
+      $assocArray = self::maskAssocArray( $assocArray, $this->getTableFields() );
+    }
     $validOrders = ["ASC","DESC"];
     $orderElements = array();
     foreach($assocArray as $field => $order){
@@ -100,13 +103,14 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->ORDERBY_query = "ORDER BY $orderElements ";
     return $this->ORDERBY_query;
   }
-  public function PAGE( $page=0 ){
+  public function PAGE( $page=0, $limit=NULL ){
+    $this->setLimit($limit);
     $this->setPage($page);
     $OFFSET = ( $this->LIMIT * $this->PAGE );
     $this->PAGINATION_query = "LIMIT $this->LIMIT OFFSET $OFFSET ";
   }
   public function setLimit($limit){
-    $limit = (int) $limit;
+    $limit = ( is_null($limit) ) ? $this->LIMIT : (int) $limit;
     $this->LIMIT = $limit;
   }
   public function setPage($page){
@@ -138,10 +142,42 @@ class SQLBasicSelector extends SQLBasicTableManager{
     if( self::isSafeSQLString($TableName) ){
 			$query = "
         DROP TABLE IF EXISTS $TableName;
-        CREATE TABLE $TableName ( $this->COMPLETE_query ) ";
+        CREATE TABLE $TableName ( $this->COMPLETE_query ); ";
       $this->execute( $query , $this->getBinds(), $buildArray=False );
 		}else{
 			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  public function dropTable($TableName){
+    if( self::isSafeSQLString($TableName) ){
+      $query = "DROP TABLE IF EXISTS $TableName; ";
+      $this->execute( $query , [], $buildArray=False );
+    }else{
+			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  public function truncateTable($TableName){
+    if( self::isSafeSQLString($TableName) ){
+      $query = "TRUNCATE TABLE $TableName; ";
+      $this->execute( $query , [], $buildArray=False );
+    }else{
+			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  public function saveAsView($ViewName){
+    if( self::isSafeSQLString($ViewName) ){
+			$query = "CREATE OR REPLACE VIEW $ViewName AS ( $this->COMPLETE_query ) ";
+      $this->execute( $query , $this->getBinds(), $buildArray=False );
+		}else{
+			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
+		}
+	}
+  public function dropView($ViewName){
+    if( self::isSafeSQLString($ViewName) ){
+      $query = "DROP VIEW IF EXISTS $ViewName; ";
+      $this->execute( $query , [], $buildArray=False );
+    }else{
+			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
 		}
   }
 
@@ -230,69 +266,4 @@ class SQLBasicSelector extends SQLBasicTableManager{
     return $x;
   }
 
-  # OPERATIONS & GROUP BY: DISTINCT, COUNT, SUM, AVG, MAX, MIN, LENGTH, UPPER, LOWER
-  # VIEW: new, drop
-}
-
-class SQLWhereObject{
-  public $query = "";
-  public $queryElements = [];
-  public $binds = array();
-  protected $WhereCounter = 0;
-  public function __construct(array $assocWhere = NULL, $symbol = "="){
-    if( !is_null($assocWhere) ){
-      $this->buildWhere($assocWhere, $symbol);
-    }
-  }
-  public function buildWhere( array $assocWhere, $symbol = "=" ){
-    foreach($assocWhere as $key => $value){
-      $symbol = ( is_array($value) ) ? "IN" : $symbol;
-      $value = ( is_array($value) ) ? $value : [$value];
-      $bindNames = [];
-      foreach($value as $v){
-        $bindName = ":where$this->WhereCounter";
-        $this->binds[$bindName] = $v;
-        $bindNames[] = $bindName;
-        $this->WhereCounter++;
-      }
-      $bindNames = implode(", ", $bindNames);
-      $this->queryElements[] = "$key $symbol ( $bindNames )";
-    }
-  }
-  public function clearWhere(){
-    $this->query = "";
-    $this->queryElements = [];
-    $this->binds = array();
-    $this->WhereCounter = 0;
-  }
-  protected function hasQueryElements(){
-    return ( sizeof($this->queryElements)!=0 );
-  }
-  public function get(){
-    if( $this->hasQueryElements() ){
-      $this->query = "WHERE " . implode(" AND ", $this->queryElements ) . " ";
-    }
-    return $this->query;
-  }
-}
-
-class pending{
-	public static function NEWVIEW($con,$viewname,$query,$binds = array() ){
-		if( self::validKey($viewname) ){
-			$viewquery = "CREATE OR REPLACE VIEW $viewname AS $query ";
-			$r = self::FREE($con,$viewquery,$binds, $fetch = False);
-			return $r['status'];
-		}else{
-			return False;
-		}
-	}
-	public static function DROPVIEW($con,$viewname){
-		if( self::validKey($viewname) ){
-			$viewquery = "DROP VIEW IF EXISTS $viewname ";
-			$r = self::FREE($con,$viewquery, array() , $fetch = False);
-			return $r['status'];
-		}else{
-			return False;
-		}
-	}
 }

@@ -101,6 +101,13 @@ class SQLBasicTableManager{
   	}
   	return $isValid;
   }
+  public static function str_has($word,$text){
+  	if (strpos($text, $word) !== false) {
+  	  return True;
+  	}else{
+  		return False;
+  	}
+  }
 
   public function retrieveDatabaseTablesNames( $reloadFields = False ){
     if( $this->isTablesNamesNULL() or $reloadFields==True ){

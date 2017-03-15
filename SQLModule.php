@@ -13,13 +13,7 @@ function is_assoc(array $array){
     $keys = array_keys($array);
     return array_keys($keys) !== $keys;
 }
-function str_has($word,$text){
-	if (strpos($text, $word) !== false) {
-	  return True;
-		}else{
-		return False;
-	}
-}
+
 function EqualReferences(&$first, &$second){
     if($first !== $second){
         return false;
@@ -34,5 +28,7 @@ function EqualReferences(&$first, &$second){
 include_once("./SQLConnector.php");
 include_once("./SQLBasicTableManager.php");
 include_once("./SQLBasicSelector.php");
+include_once("./SQLSummarySelector.php");
+include_once("./SQLWhereObject.php");
 include_once("./ErrorManager.php");
 include_once("./DISPLAY.php");
