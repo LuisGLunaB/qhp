@@ -64,6 +64,7 @@ class SQLBasicTableManager{
   protected function isFieldsMaskOn(){
     return !is_null($this->fieldsMask);
   }
+
   public static function maskArray(array $maskArray, array $validKeysArray){
     $maskedArray = [];
     foreach($maskArray as $key){
@@ -81,6 +82,24 @@ class SQLBasicTableManager{
       }
     }
     return $maskedArray;
+  }
+  public static function multi_str_replace( array $search_replace_assoc, $subject){
+    foreach($search_replace_assoc as $search => $replace){
+      $subject = str_replace($search,$replace,$subject);
+    }
+    return $subject;
+  }
+  public static function isSafeSQLString($string){
+  	$isValid = True;
+    $forbiddenCharacters = ["'",'"',"%","&","=","!","|","¡","/",":",";"];
+  	$Characters = str_split($string);
+  	foreach($Characters as $char){
+  		if( in_array($char,$forbiddenCharacters) ){
+        $isValid = False;
+        break;
+      }
+  	}
+  	return $isValid;
   }
 
   public function retrieveDatabaseTablesNames( $reloadFields = False ){

@@ -30,13 +30,14 @@ class ErrorManager{
 	}
 
 	protected function manageExecutionEnd( $exitExecution ){
-		if( !is_null($exitExecution) ){
-			$this->exitExecution = $exitExecution;
+		# If $exitExecution is NULL, use current object state for the exit; decision.
+		if( is_null($exitExecution) ){
+			$exitExecution = $this->exitExecution;
 		}
-		if( $this->exitExecution ){
+		if( $exitExecution ){
 			exit;
 		}
-		return $this->exitExecution;
+		return $exitExecution;
 	}
 
 	public function showErrorMessage(){
