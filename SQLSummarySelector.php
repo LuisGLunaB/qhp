@@ -29,6 +29,8 @@ class SQLSummarySelector extends SQLBasicSelector{
     $this->OPERATIONS_query = implode(", ", $this->operationsArray );
     return $this->OPERATIONS_query;
   }
+
+  # All the following functions just call the OPERATION method.
   public function DISTINCT($fields, $tag=NULL){
     return $this->OPERATION($fields, $tag, "DISTINCT");
   }
@@ -76,7 +78,7 @@ class SQLSummarySelector extends SQLBasicSelector{
   }
 
   public function getQuery(){
-    $this->parseOperations();
+    $this->SELECT_query = $this->parseOperations();
     $this->COMPLETE_query =
       $this->SELECT_query . " " .
       $this->WHERE_query . " " .
@@ -87,9 +89,9 @@ class SQLSummarySelector extends SQLBasicSelector{
   }
   protected function parseOperations(){
     if( $this->commaSeparatedFields=="" or self::str_has("*",$this->SELECT_query) ){
-      $this->SELECT_query = "SELECT $this->OPERATIONS_query FROM $this->TableName ";
+      return "SELECT $this->OPERATIONS_query FROM $this->TableName ";
     }else{
-      $this->SELECT_query = str_replace("FROM",", $this->OPERATIONS_query FROM",$this->SELECT_query);
+      return str_replace("FROM",", $this->OPERATIONS_query FROM",$this->SELECT_query);
     }
   }
 

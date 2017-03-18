@@ -108,6 +108,35 @@ class SQLBasicTableManager{
   		return False;
   	}
   }
+  public static function is_assoc($array){
+      $keys = array_keys($array);
+      return array_keys($keys) !== $keys;
+  }
+  public static function is_table($array){
+    if( self::is_assoc($array) ){
+      return False;
+    }else{
+      $firstRow = $array[0];
+      if( self::is_assoc($firstRow) ){
+        return True;
+      }else{
+        return False;
+      }
+    }
+  }
+  public static function unset_byvalue($value, &$array){
+    if( ($key = array_search($value, $array)) !== false) {
+        unset($array[$key]);
+    }
+    return $array;
+  }
+  public static function regular_to_assoc($regular,$key){
+    $assoc = [];
+    foreach($regular as $value){
+      $assoc[] = array($key => $value);
+    }
+    return $assoc;
+  }
 
   public function retrieveDatabaseTablesNames( $reloadFields = False ){
     if( $this->isTablesNamesNULL() or $reloadFields==True ){
@@ -127,6 +156,9 @@ class SQLBasicTableManager{
 	}
   public function isValidTable(){
     return in_array( $this->TableName, $this->retrieveDatabaseTablesNames(True) );
+  }
+  public function isValidField($foreignField){
+    return in_array($foreignField,$this->getTableFields());
   }
   public function assertValidTable(){
     try{

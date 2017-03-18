@@ -17,12 +17,12 @@ class ErrorManager{
 	public function weAreDebugging(){
 		return $this->debugging;
 	}
-	public function handleError($message, $e, $exitExecution = NULL ){
+	public function handleError($message, $e=NULL, $exitExecution = NULL ){
 		$this->errorMessage = $message;
 		$this->status = False;
 
 		if( $this->weAreDebugging() ){
-			$this->errorMessage .= " ".$e->getMessage();
+			$this->errorMessage .= (is_null($e)) ? "" : " ".$e->getMessage();
 			$this->alertErrorMessage();
 		}
 

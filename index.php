@@ -3,24 +3,16 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	$PRUEBA = new SQLSummarySelector($con,"productos", ["id","rin"]);
-	$PRUEBA->UPPERCASE( ["marca"], "");
-	$PRUEBA->COUNT( ["pmenudeo"] );
-	$PRUEBA->AVG( ["pmenudeo"] );
-	$PRUEBA->STD( ["pmenudeo"] );
-	$PRUEBA->GROUPBY( ["marca","rin"]);
-	//$PRUEBA->PAGE( 0 );
-	$PRUEBA->LOWER_EQUAL( array("id"=>100) );
-	$PRUEBA->ORDERBY( array("marca"=>"ASC","rin"=>"DESC") );
+	$PRUEBA = new SQLInsert($con, "productos", ["id","rin","marca"]);
+	$PRUEBA->INSERT( [array("id" => 3213 ,"rin" => 10, "marca" => "Uno0"),array("id" => 3214 ,"rin" => 20, "marca" => "Dos0")] );
+	$PRUEBA->ONDUPLICATE();
 	$PRUEBA->execute();
-
-	echo $PRUEBA->getRawQuery();
-	DISPLAY::asTable($PRUEBA->data);
-	/*
-	$PRUEBA = new SQL($con,"blog");
-	$PRUEBA->SELECT( ["id"]);
-	$PRUEBA->EXECUTE();
-	$PRUEBA->json();*/
+	echo $PRUEBA->getQuery();
+	// Save as Table
+	// Refactoring
+	// WHERE: valid Symbols
+	// WHERE: Like
+	// Update, Delete, activate/deactivate
 }else{
 	echo $SQLConnection->message();
 }
