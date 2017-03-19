@@ -38,6 +38,53 @@ class SQLInsert extends SQLBasicTableManager{
     return $this->ONDUPLICATE_query;
   }
 
+  public function saveAsTable($TableName,$data,$firstIsKey=True,
+      $VARCHARsize=200,$FLOATsize=30,$INTsize=30){
+
+    $data = SQLBasicTableManager::inputAsTable($data);
+    $fields = array_keys($data[0]);
+    $firstIsKey = ( is_integer($data[0][$fields[0]]) ) ? $firstIsKey : False;
+
+    if( self::isSafeSQLString($TableName) ){
+      $fieldConfigList = [];
+      $firstLoop = True;
+      foreach($fields as $field){
+        if( $firstLoop and $firstIsKey ){
+          $fieldConfigList[] = "$field INT($INTsize) UNSIGNED AUTO_INCREMENT PRIMARY KEY";
+          $firstLoop = False;
+          continue;
+        }
+        $firstLoop = False;
+        $value = $data[0][$field];
+        $type = "";
+        if(is_numeric($value)){ $type = "FLOAT($FLOATsize)"; }
+        if(is_integer($value)){ $type = "INT($INTsize)"; }
+        if(is_string($value)){ $type = "VARCHAR($VARCHARsize)"; }
+        if(is_null($value)){ $type = "FLOAT($FLOATsize)"; }
+        $fieldConfigList[] = "$field $type";
+      }
+      $fieldsConfiguration = implode(", ", $fieldConfigList);
+      $query = "
+        DROP TABLE IF EXISTS $TableName;
+        CREATE TABLE $TableName ( $fieldsConfiguration );";
+      try{
+        $this->Query = $this->con['handler']->prepare( $query );
+  			$this->Query->execute();
+      }catch (Exception $e){
+        $this->ErrorManager->handleError("Error in CREATE $TableName.", $e, $exitExecution=True);
+  		}
+      $this->TableName = $TableName;
+      $this->getTableFields($reload=True);
+      $this->updateFieldsMask(NULL);
+      $this->INSERT($data);
+      $this->execute();
+    }else{
+      $this->ErrorManager->handleError("$TableName is not a valid table name." );
+    }
+
+    return $query;
+  }
+
   protected function parseInsertIntoRow(){
     $this->maskFields();
     $commaSeparatedFields = implode(", ",$this->maskedFields);

@@ -2,7 +2,7 @@
 class ErrorManager{
 	Public $debugging = False;
 	Protected $status = True;
-	Protected $message = "";
+	Protected $errorMessage = "";
 	Public $exitExecution = False;
 
 	public function __construct(){
@@ -17,13 +17,13 @@ class ErrorManager{
 	public function weAreDebugging(){
 		return $this->debugging;
 	}
-	public function handleError($message, $e=NULL, $exitExecution = NULL ){
-		$this->errorMessage = $message;
+	public function handleError($errorMessage, $e=NULL, $exitExecution = NULL ){
+		$this->errorMessage = $errorMessage;
 		$this->status = False;
 
 		if( $this->weAreDebugging() ){
 			$this->errorMessage .= (is_null($e)) ? "" : " ".$e->getMessage();
-			$this->alertErrorMessage();
+			self::alertErrorMessage($errorMessage);
 		}
 
 		$this->manageExecutionEnd( $exitExecution );
@@ -40,19 +40,18 @@ class ErrorManager{
 		return $exitExecution;
 	}
 
-	public function showErrorMessage(){
-		echo $this->errorMessage;
+	public static function showErrorMessage($errorMessage){
+		echo $errorMessage;
 	}
-	public function alertErrorMessage(){
-		echo printf("<script>alert('%s');</script>", $this->errorMessage);
+	public static function alertErrorMessage($errorMessage){
+		echo printf("<script>alert('%s');</script>", $errorMessage);
 	}
-	//public function alertErrorMessage(){}
 
 	public function getStatus(){
 		return $this->status;
 	}
 	public function getMessage(){
-		return $this->message;
+		return $this->errorMessage;
 	}
 
 }

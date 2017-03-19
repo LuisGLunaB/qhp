@@ -6,7 +6,7 @@ class SQLBasicTableManager{
 
   public $DatabaseTablesNames = NULL;
 
-  public $TableName = ""; #Or View's Name
+  public $TableName = ""; #Table or View Name
   public $TableFields = NULL;
   public $maskedFields = [];
   public $fieldsMask = NULL;
@@ -19,33 +19,62 @@ class SQLBasicTableManager{
     $this->TableName = $TableName;
     $this->fieldsMask = $fieldsMask;
 
-    if( $this->isFieldsMaskOn() ){
-      $this->maskFields();
-    }
-
+    if( $this->isFieldsMaskOn() ){ $this->maskFields(); }
   }
 
-  public function getTableFields( $reloadFields = False ){
-		if( $this->isTableFieldsNULL() or $reloadFields==True ){
+  # TableNames Retrievers Methods
+  public function getAllTableNames( $reload = False ){
+    if( $this->isTablesNamesNULL() or $reload==True ){
+      $this->TABLES();
+		}
+		return $this->DatabaseTablesNames;
+  }
+	protected function TABLES(){
+    $this->DatabaseTablesNames = $this->executeFetchColumn( "SHOW TABLES;" );
+		return $this->DatabaseTablesNames;
+	}
+  public function isValidTable(){
+    return in_array( $this->TableName, $this->getAllTableNames(True) );
+  }
+  public function isValidForeignTable($TableName){
+    return in_array( $TableName, $this->getAllTableNames(True) );
+  }
+  public function assertValidTable(){
+    try{
+      if( !$this->isValidTable() ){
+        throw new Exception("#Custom exception in assertValidTable.");
+      }
+    } catch (Exception $e){
+      $this->ErrorManager->handleError("Table $this->TableName does not exist.", $e );
+    }
+  }
+  protected function isTablesNamesNULL(){
+    return is_null($this->DatabaseTablesNames);
+  }
+
+  # Table Fields Retrievers Methods
+  public function getTableFields( $reload = False ){
+		if( $this->isTableFieldsNULL() or $reload==True ){
       $this->DESCRIBE();
 		}
 		return $this->TableFields;
   }
-  public function getTableId( $reloadFields = False ){
-    $this->getTableFields( $reloadFields );
-    return $this->TableFields[0];
-  }
   protected function DESCRIBE(){
-    try{
-      $this->Query = $this->con['handler']->prepare("DESCRIBE $this->TableName ");
-      $this->Query->execute();
-      $this->TableFields = $this->Query->fetchAll(PDO::FETCH_COLUMN);
-    }catch(Exception $e){
-      $this->ErrorManager->handleError("Error in DESCRIBE $this->TableName.", $e );
-    }
+    $this->TableFields = $this->executeFetchColumn( "DESCRIBE $this->TableName;" );
     return $this->TableFields;
   }
+  public function getTableId( $reload = False ){
+    $this->getTableFields( $reload );
+    return $this->TableFields[0];
+  }
+  protected function isTableFieldsNULL(){
+    return is_null($this->TableFields);
+  }
+  public function isValidField($foreignField){
+    return in_array($foreignField,$this->getTableFields());
+  }
 
+  # Fields Maskers Methods
   protected function maskFields(){
     if( $this->isFieldsMaskOn() ){
       $this->maskedFields = self::maskArray( $this->fieldsMask, $this->getTableFields() );
@@ -53,18 +82,18 @@ class SQLBasicTableManager{
       $this->maskedFields = $this->getTableFields();
     }
   }
-  public function updateFieldsMask( array $newMask ){
+  public function updateFieldsMask( $newMask ){
     $this->fieldsMask = $newMask;
     $this->maskFields();
   }
   public function deleteFieldsMask(){
-    $this->fieldsMask = NULL;
-    $this->maskFields();
+    $this->updateFieldsMask(NULL);
   }
   protected function isFieldsMaskOn(){
     return !is_null($this->fieldsMask);
   }
 
+  # Static Useful Masking and String Methods
   public static function maskArray(array $maskArray, array $validKeysArray){
     $maskedArray = [];
     foreach($maskArray as $key){
@@ -108,6 +137,8 @@ class SQLBasicTableManager{
   		return False;
   	}
   }
+
+  # Static type validation Methods
   public static function is_assoc($array){
       $keys = array_keys($array);
       return array_keys($keys) !== $keys;
@@ -130,53 +161,46 @@ class SQLBasicTableManager{
     }
     return $array;
   }
-  public static function regular_to_assoc($regular,$key){
+  public static function inputAsAssoc($regularArray,$key){
     $assoc = [];
-    foreach($regular as $value){
+    foreach($regularArray as $value){
       $assoc[] = array($key => $value);
     }
     return $assoc;
   }
+  public static function inputAsArray($array){
+    return ( is_array($array) ) ? $array : [$array];
+  }
+  public static function inputAsTable($array){
+    return ( self::is_table($array) ) ? $array : [$array];
+  }
 
-  public function retrieveDatabaseTablesNames( $reloadFields = False ){
-    if( $this->isTablesNamesNULL() or $reloadFields==True ){
-      $this->TABLES();
-		}
-		return $this->DatabaseTablesNames;
-  }
-	protected function TABLES(){
-		try{
-			$this->Query = $this->con['handler']->prepare("SHOW TABLES ");
-			$this->Query->execute();
-			$this->DatabaseTablesNames = $this->Query->fetchAll(PDO::FETCH_COLUMN);
-		}catch(Exception $e){
-			$this->ErrorManager->handleError("Error in SHOW TABLES.", $e );
-		}
-		return $this->DatabaseTablesNames;
-	}
-  public function isValidTable(){
-    return in_array( $this->TableName, $this->retrieveDatabaseTablesNames(True) );
-  }
-  public function isValidField($foreignField){
-    return in_array($foreignField,$this->getTableFields());
-  }
-  public function assertValidTable(){
+  # Query execution Methods
+  public function executeQuery($query, $binds=[] ){
     try{
-      if( !$this->isValidTable() ){
-        throw new Exception("#Custom exception in assertValidTable.");
-      }
-    } catch (Exception $e){
-      $this->ErrorManager->handleError("Table $this->TableName is not in the Database.", $e );
+      $this->Query = $this->con['handler']->prepare( $query );
+      $this->Query->execute( $binds );
+    }catch(Exception $e){
+      $this->ErrorManager->handleError("Error in executeQuery $this->TableName.", $e );
+    }
+  }
+  public function executeQueryWithBinds($query,$binds){
+    $this->executeQuery($query,$binds);
+  }
+  public function executeFetchColumn($query){
+    $this->executeQuery($query);
+    return $this->fetchColumn($query);
+  }
+  public function fetchColumn(){
+    try{
+      return $this->Query->fetchAll(PDO::FETCH_COLUMN);
+    }catch(Exception $e){
+      $this->ErrorManager->handleError("Error in FETCH_COLUMN $this->TableName.", $e );
+      return NULL;
     }
   }
 
-  protected function isTableFieldsNULL(){
-    return is_null($this->TableFields);
-  }
-  protected function isTablesNamesNULL(){
-    return is_null($this->DatabaseTablesNames);
-  }
-
+  # ErrorManager state callers
   public function status(){
     return $this->ErrorManager->getStatus();
   }

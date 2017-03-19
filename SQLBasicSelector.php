@@ -18,6 +18,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
   protected $PAGE = 0;
 
   public $FREE_query = "";
+  public $FREE_binds = array();
 
   public $data = array();
 
@@ -32,9 +33,15 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->buildSELECT();
   }
 
+  # Methods about $SELECT_query
   public function buildSELECT(){
     $this->getCommaSeparatedFields();
     $this->SELECT();
+  }
+  public function getCommaSeparatedFields(){
+    $this->maskFields();
+    $this->commaSeparatedFields = implode(", ", $this->maskedFields );
+    return $this->commaSeparatedFields;
   }
   public function SELECT(){
     if( $this->isFieldsMaskOn() ){
@@ -42,25 +49,20 @@ class SQLBasicSelector extends SQLBasicTableManager{
     }else{
       $this->SELECT_query = "SELECT * FROM $this->TableName ";
     }
-  }
-  public function getCommaSeparatedFields(){
-    $this->maskFields();
-    $this->commaSeparatedFields = implode(", ", $this->maskedFields );
+    return $this->SELECT_query;
   }
 
+  # Methods about $WHERE_query
   public function WHERE( array $assocWhere, $fieldsMask = NULL, $symbol = "=" ){
     /* This method is not refactored in order to keep all the coupling to
     the WHEREObject in a single place. */
 
     # Create WHERE Object if necessary
-    if( is_null($this->WHERE) ){
-      $this->WHERE = new SQLWhereObject();
-    }
+    if( is_null($this->WHERE) ){ $this->WHERE = new SQLWhereObject(); }
 
     # Mask Where with valid Table Fields
     if( is_null($fieldsMask) ){
-      $this->getTableFields();
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->TableFields);
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->getTableFields() );
     }else{
       $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
     }
@@ -82,33 +84,45 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public function LOWER_EQUAL( array $assocWhere, $fieldsMask = NULL ){
     return $this->WHERE( $assocWhere, $fieldsMask, $symbol="<=");
   }
+  public function LIKE( array $assocWhere, $fieldsMask = NULL ){
+    return $this->WHERE( $assocWhere, $fieldsMask, $symbol="LIKE");
+  }
   public function WHEREID( $id ){
-    $idField = $this->getTableId();
-    return $this->WHERE( array($idField=>$id), [$idField] );
+    return $this->WHERE(
+      $assocWhere = array( $this->getTableId() => $id),
+      $fieldsMask = [ $this->getTableId() ]
+    );
   }
   public function whereExists(){
     return ( !is_null($this->WHERE) );
   }
 
+  # Methods about $ORDERBY_query
   public function ORDERBY( $assocArray ){
     if($this->maskORDERBY){
       $assocArray = self::maskAssocArray( $assocArray, $this->getTableFields() );
     }
-    $validOrders = ["ASC","DESC"];
-    $orderElements = array();
-    foreach($assocArray as $field => $order){
-      $order = in_array($order,$validOrders) ? $order : "DESC";
-      $orderElements[] = "$field $order";
-    }
-    $orderElements = implode(", ", $orderElements);
-    $this->ORDERBY_query = "ORDER BY $orderElements ";
+    $orderElementsArray = $this->buildOrderByArray($assocArray,$validOrders=["ASC","DESC"]);
+    $orderElementsString = implode(", ", $orderElementsArray);
+    $this->ORDERBY_query = "ORDER BY $orderElementsString ";
     return $this->ORDERBY_query;
   }
+  public function buildOrderByArray($assocArray,$validOrders){
+    $orderElementsArray = array();
+    foreach($assocArray as $field => $order){
+      $order = in_array($order,$validOrders) ? $order : "DESC";
+      $orderElementsArray[] = "$field $order";
+    }
+    return $orderElementsArray;
+  }
+
+  # Methods about $PAGINATION_query
   public function PAGE( $page=0, $limit=NULL ){
     $this->setLimit($limit);
     $this->setPage($page);
     $OFFSET = ( $this->LIMIT * $this->PAGE );
     $this->PAGINATION_query = "LIMIT $this->LIMIT OFFSET $OFFSET ";
+    return $this->PAGINATION_query;
   }
   public function setLimit($limit){
     $limit = ( is_null($limit) ) ? $this->LIMIT : (int) $limit;
@@ -118,89 +132,47 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $page = (int) $page;
     $this->PAGE = $page;
   }
-  public function FREE( $query, $binds=[] ){
-    $this->COMPLETE_query = $query;
-    $this->WHERE->binds = $binds;
-    return $this->execute( $this->COMPLETE_query , $this->WHERE->binds );
-  }
 
-  public function execute( $query=NULL, $binds=NULL, $buildArray=True ){
-    $this->data = array();
+  # Main Execution and Fetching Methods
+  public function execute($query=NULL,$binds=NULL){
+    $query = (is_null($query)) ? $this->getQuery() : $query;
+    $binds = (is_null($binds)) ? $this->getBinds(): $binds;
 
     $this->recordStatistics("START");
-    $this->tryToExecuteQuery($query, $binds);
+    $this->executeFetchTable( $query , $binds );
 
     $this->recordStatistics("BUILD");
-    if($buildArray){
-		    $this->buildArrayFromExecution();
-    }
+    $this->data = array();
+		$this->fetchExecutedTable();
 
     $this->recordStatistics("STOP");
-
 		return $this->data;
   }
-  public function saveAsTable($TableName){
-    if( self::isSafeSQLString($TableName) ){
-			$query = "
-        DROP TABLE IF EXISTS $TableName;
-        CREATE TABLE $TableName ( $this->COMPLETE_query ); ";
-      $this->execute( $query , $this->getBinds(), $buildArray=False );
-		}else{
-			$this->ErrorManager->handleError("$TableName is not a valid table name." );
-		}
+  public function getQuery(){
+      $this->COMPLETE_query =
+        $this->SELECT_query . " " .
+        $this->WHERE_query . " " .
+        $this->ORDERBY_query . " ".
+        $this->PAGINATION_query;
+      return $this->COMPLETE_query;
   }
-  public function dropTable($TableName){
-    if( self::isSafeSQLString($TableName) ){
-      $query = "DROP TABLE IF EXISTS $TableName; ";
-      $this->execute( $query , [], $buildArray=False );
-    }else{
-			$this->ErrorManager->handleError("$TableName is not a valid table name." );
-		}
+  public function getBinds(){
+    $binds = [];
+    if( $this->whereExists() ){
+      $binds = $this->WHERE->binds;
+    }
+    return $binds;
   }
-  public function truncateTable($TableName){
-    if( self::isSafeSQLString($TableName) ){
-      $query = "TRUNCATE TABLE $TableName; ";
-      $this->execute( $query , [], $buildArray=False );
-    }else{
-			$this->ErrorManager->handleError("$TableName is not a valid table name." );
-		}
-  }
-  public function saveAsView($ViewName){
-    if( self::isSafeSQLString($ViewName) ){
-			$query = "CREATE OR REPLACE VIEW $ViewName AS ( $this->COMPLETE_query ) ";
-      $this->execute( $query , $this->getBinds(), $buildArray=False );
-		}else{
-			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
-		}
-	}
-  public function dropView($ViewName){
-    if( self::isSafeSQLString($ViewName) ){
-      $query = "DROP VIEW IF EXISTS $ViewName; ";
-      $this->execute( $query , [], $buildArray=False );
-    }else{
-			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
-		}
-  }
-
-  protected function tryToExecuteQuery( $query=NULL, $binds=NULL ){
-    $query = is_null($query) ? $this->getQuery() : $query;
-    $binds = is_null($binds) ? $this->getBinds() : $binds;
+  public function executeFetchTable( $query, $binds ){
     try{
 			$this->Query = $this->con['handler']->prepare( $query );
 			$this->Query->setFetchMode(PDO::FETCH_ASSOC);
 			$this->Query->execute( $binds );
     }catch (Exception $e){
-      $this->ErrorManager->handleError("Error in SELECT $this->TableName.", $e );
+      $this->ErrorManager->handleError("Error in FetchTable $this->TableName.", $e );
 		}
   }
-  public function getBinds(){
-    if( $this->whereExists() ){
-      return $this->WHERE->binds;
-    }else {
-      return array();
-    }
-  }
-  protected function buildArrayFromExecution(){
+  protected function fetchExecutedTable(){
     if( $this->status() ){
       $row = 0;
       while( $QueryRow=$this->Query->fetch() ){
@@ -212,18 +184,6 @@ class SQLBasicSelector extends SQLBasicTableManager{
       } //while fetching
     } //if status
   }
-  public function getQuery(){
-    $this->COMPLETE_query =
-      $this->SELECT_query . " " .
-      $this->WHERE_query . " " .
-      $this->ORDERBY_query . " ".
-      $this->PAGINATION_query;
-    return $this->COMPLETE_query;
-  }
-  public function getRawQuery(){
-    return self::multi_str_replace( $this->getBinds(), $this->COMPLETE_query );
-  }
-
   protected function recordStatistics($command){
     if($command=="START"){
       $this->ExecutionTime = microtime(true);
@@ -242,6 +202,73 @@ class SQLBasicSelector extends SQLBasicTableManager{
     }
   }
 
+  # Free Execution and Fetching Methods (SQLInjection UNSAFE)
+  public function executeFree( $query, $binds=[] ){
+    $this->FREE_query = $query;
+    $this->FREE_binds= $binds;
+    return $this->execute( $query, $binds );
+  }
+
+  # Table Operations Methods
+  public function saveAsTable($TableName,$DATA_query=NULL,$binds=NULL){
+    $TableName = strtolower($TableName);
+    if( self::isSafeSQLString($TableName) ){
+      $DATA_query = (is_null($DATA_query)) ? $this->getQuery() : $DATA_query;
+      $binds = (is_null($binds)) ? $this->getBinds() : $binds;
+			$query =
+        "DROP TABLE IF EXISTS $TableName;
+        CREATE TABLE $TableName ( $DATA_query ); ";
+      $this->executeQueryWithBinds( $query , $binds );
+		}else{
+			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  public function dropTable($TableName){
+    $TableName = strtolower($TableName);
+    if( self::isSafeSQLString($TableName) ){
+      $query = "DROP TABLE IF EXISTS $TableName; ";
+      $this->executeQuery( $query );
+    }else{
+			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  public function truncateTable($TableName){
+    $TableName = strtolower($TableName);
+    if( self::isSafeSQLString($TableName) ){
+      if( $this->isValidForeignTable($TableName) ){
+        $query = "TRUNCATE TABLE $TableName; ";
+        $this->executeQuery( $query );
+      }
+    }else{
+			$this->ErrorManager->handleError("$TableName is not a valid table name." );
+		}
+  }
+  # View Operations Methods
+  public function saveAsView($ViewName,$DATA_query=NULL,$binds=NULL){
+    $ViewName = strtolower($ViewName);
+    if( self::isSafeSQLString($ViewName) ){
+      $DATA_query = (is_null($DATA_query)) ? $this->getQuery() : $DATA_query;
+      $binds = (is_null($binds)) ? $this->getBinds() : $binds;
+			$query = "CREATE OR REPLACE VIEW $ViewName AS ( $DATA_query ) ";
+      $this->executeQueryWithBinds( $query , $binds );
+		}else{
+			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
+		}
+	}
+  public function dropView($ViewName){
+    $ViewName = strtolower($ViewName);
+    if( self::isSafeSQLString($ViewName) ){
+      $query = "DROP VIEW IF EXISTS $ViewName; ";
+      $this->executeQuery( $query );
+    }else{
+			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
+		}
+  }
+
+  # Property Retrieving Methods
+  public function getRawQuery(){
+    return self::multi_str_replace( $this->getBinds(), $this->getQuery() );
+  }
   public function hasData(){
     return ( $this->rowSize() > 0 );
   }
@@ -258,7 +285,6 @@ class SQLBasicSelector extends SQLBasicTableManager{
       return [];
     }
   }
-
   public function getStatistics(){
     $x["DataSize"] = $this->DataSize;
     $x["ExecutionTime"] = $this->ExecutionTime;

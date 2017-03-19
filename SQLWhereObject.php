@@ -1,10 +1,11 @@
 <?php
-
 class SQLWhereObject{
   public $query = "";
   public $queryElements = [];
   public $binds = array();
   protected $WhereCounter = 0;
+  protected $validSymbols = ["=",">",">=","<","<=","IN","LIKE"];
+
   public function __construct(array $assocWhere = NULL, $symbol = "="){
     if( !is_null($assocWhere) ){
       $this->buildWhere($assocWhere, $symbol);
@@ -12,32 +13,55 @@ class SQLWhereObject{
   }
   public function buildWhere( array $assocWhere, $symbol = "=" ){
     foreach($assocWhere as $key => $value){
-      $symbol = ( is_array($value) ) ? "IN" : $symbol;
-      $value = ( is_array($value) ) ? $value : [$value];
-      $bindNames = [];
-      foreach($value as $v){
-        $bindName = ":where$this->WhereCounter";
-        $this->binds[$bindName] = $v;
-        $bindNames[] = $bindName;
-        $this->WhereCounter++;
-      }
-      $bindNames = implode(", ", $bindNames);
-      $this->queryElements[] = "$key $symbol ( $bindNames )";
+      $symbol = $this->checkForINSymbol($value,$symbol);
+      $symbol = $this->forceValidSymbol($symbol);
+      $value = SQLBasicTableManager::inputAsArray($value);
+
+      $bindedNamesArray = $this->bindAndCountWheres($value);
+
+      $bindedNamesString = implode(", ", $bindedNamesArray);
+      $this->queryElements[] = "$key $symbol ( $bindedNamesString )";
     }
   }
-  public function clearWhere(){
-    $this->query = "";
-    $this->queryElements = [];
-    $this->binds = array();
-    $this->WhereCounter = 0;
+  protected function bindAndCountWheres($value){
+    $bindedNamesArray = [];
+    foreach($value as $v){
+      $bindName = ":where$this->WhereCounter";
+      $this->binds[$bindName] = $v;
+      $bindedNamesArray[] = $bindName;
+      $this->WhereCounter++;
+    }
+    return $bindedNamesArray;
   }
-  protected function hasQueryElements(){
-    return ( sizeof($this->queryElements)!=0 );
+
+  # Symbol Whitelisting Methods
+  public function checkForINSymbol($value,$symbol){
+    $symbol = ( is_array($value) ) ? "IN" : $symbol;
+    return $symbol;
   }
+  public function forceValidSymbol($foreignSymbol){
+    $symbol = ( $this->isValidSymbol($foreignSymbol) ) ? $foreignSymbol : "=";
+    return $symbol;
+  }
+  public function isValidSymbol($foreignSymbol){
+    return in_array($foreignSymbol,$this->validSymbols);
+  }
+
+  # Query retriever methods
   public function get(){
     if( $this->hasQueryElements() ){
       $this->query = "WHERE " . implode(" AND ", $this->queryElements ) . " ";
     }
     return $this->query;
+  }
+  protected function hasQueryElements(){
+    return ( sizeof($this->queryElements)!=0 );
+  }
+
+  public function clear(){
+    $this->query = "";
+    $this->queryElements = [];
+    $this->binds = array();
+    $this->WhereCounter = 0;
   }
 }

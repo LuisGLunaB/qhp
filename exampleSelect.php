@@ -12,8 +12,13 @@ if( $SQLConnection->status() ){
 	$PRUEBA->PAGE( 0,10 );
 	$PRUEBA->LOWER_EQUAL( array("id"=>100) );
 	$PRUEBA->ORDERBY( array("pmenudeo_COUNT"=>"DESC") );
+	$PRUEBA->saveAsView("yeyv");
 	$PRUEBA->execute();
-	echo $PRUEBA->getRawQuery();
+
+	//$PRUEBA->executeFree("SELECT * FROM productos", []);
+
+	echo "Raw: ".$PRUEBA->getRawQuery();
+	//echo "Free: ".$PRUEBA->FREE_query;
 	DISPLAY::asTable($PRUEBA->data);
 }else{
 	echo $SQLConnection->message();

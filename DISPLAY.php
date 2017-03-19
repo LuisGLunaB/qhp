@@ -51,4 +51,10 @@ class DISPLAY{
     self::showData( $table,$display);
     return $table;
   }
+  public static function asAPI($object,$display=True){
+    $data["status"] = $object->status();
+    $data["message"] = $object->message();
+    $data["data"] = $object->data;
+    self::asJSON($data,$setHeader=True,$display=True);
+  }
 }
