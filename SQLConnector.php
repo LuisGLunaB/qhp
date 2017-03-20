@@ -1,5 +1,4 @@
 <?php
-
 class SQLConnector{
 	Protected $Connection = NULL;
 
@@ -24,10 +23,6 @@ class SQLConnector{
 		$this->Password = $Password;
 	}
 
-	public function getConnector(){
-		$this->assertOpenConnection();
-		return $this->Connection;
-	}
 	Protected function isConnectionDataComplete(){
 		return (
 			($this->DatabaseHost !="" ) and
@@ -87,6 +82,10 @@ class SQLConnector{
 		} catch (Exception $e){
 			$this->ErrorManager->handleError("Connection is not open.", $e, $exitExecution=False );
 		}
+	}
+	public function getConnector(){
+		$this->assertOpenConnection();
+		return $this->Connection;
 	}
 
   public function status(){

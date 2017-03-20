@@ -1,5 +1,4 @@
 <?php
-
 class SQLBasicTableManager{
   Protected $con = NULL; #SQLConnector->Connection
   Protected $Query = NULL;
@@ -18,8 +17,7 @@ class SQLBasicTableManager{
     $this->con = $con;
     $this->TableName = $TableName;
     $this->fieldsMask = $fieldsMask;
-
-    if( $this->isFieldsMaskOn() ){ $this->maskFields(); }
+    $this->updateFieldsMask($fieldsMask);
   }
 
   # TableNames Retrievers Methods
@@ -54,7 +52,7 @@ class SQLBasicTableManager{
 
   # Table Fields Retrievers Methods
   public function getTableFields( $reload = False ){
-		if( $this->isTableFieldsNULL() or $reload==True ){
+		if( $this->isTableFieldsNULL() or $reload ){
       $this->DESCRIBE();
 		}
 		return $this->TableFields;
@@ -138,7 +136,7 @@ class SQLBasicTableManager{
   	}
   }
 
-  # Static type validation Methods
+  # Static Type-validating Methods
   public static function is_assoc($array){
       $keys = array_keys($array);
       return array_keys($keys) !== $keys;
