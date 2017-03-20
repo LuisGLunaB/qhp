@@ -10,12 +10,10 @@ class SQLSummarySelector extends SQLBasicSelector{
 
   public function __construct($con, $TableName, array $fieldsMask = NULL ){
     parent::__construct($con,$TableName,$fieldsMask);
-    $this->buildSELECT();
   }
 
   public function OPERATION($fields, $tag=NULL, $OPERATION="AVG"){
-    $this->getTableFields();
-    $fields = self::maskArray($fields, $this->TableFields);
+    $fields = self::maskArray($fields, $this->getTableFields() );
     $tag = ( is_null($tag) ) ? "_$OPERATION" : $tag;
 
     if( $this->isValidOperation($OPERATION) ){
@@ -63,8 +61,7 @@ class SQLSummarySelector extends SQLBasicSelector{
   }
 
   public function GROUPBY($fields){
-    $this->getTableFields();
-    $fields = self::maskArray($fields, $this->TableFields);
+    $fields = self::maskArray($fields, $this->getTableFields() );
     $fieldsString = implode(", ", $fields);
     $this->GROUPBY_query = "GROUP BY $fieldsString ";
     return $this->GROUPBY_query;
@@ -73,26 +70,25 @@ class SQLSummarySelector extends SQLBasicSelector{
   public function isValidOperation($operation){
     return ( in_array($operation,$this->validOperations) );
   }
-  public function clearOperations(){
-    $this->$operationsArray = [];
+  public function clear(){
+    $this->operationsArray = [];
+    $this->OPERATIONS_query = "";
+    $this->GROUPBY_query = "";
   }
 
   public function getQuery(){
-    $this->SELECT_query = $this->parseOperations();
-    $this->COMPLETE_query =
-      $this->SELECT_query . " " .
-      $this->WHERE_query . " " .
-      $this->GROUPBY_query . " " .
-      $this->ORDERBY_query . " " .
-      $this->PAGINATION_query;
-    return $this->COMPLETE_query;
+    $this->SELECT_query = $this->getSelectWithOperations();
+    return parent::getQuery();
   }
-  protected function parseOperations(){
-    if( $this->commaSeparatedFields=="" or self::str_has("*",$this->SELECT_query) ){
-      return "SELECT $this->OPERATIONS_query FROM $this->TableName ";
+
+  public function getSelectWithOperations(){
+    $query = "";
+    if( $this->isFieldsMaskOn() ){
+      $query = "SELECT $this->commaSeparatedFields, $this->OPERATIONS_query FROM $this->TableName ";
     }else{
-      return str_replace("FROM",", $this->OPERATIONS_query FROM",$this->SELECT_query);
+      $query= "SELECT $this->OPERATIONS_query FROM $this->TableName ";
     }
+    return $query;
   }
 
 }

@@ -9,13 +9,10 @@ if( $SQLConnection->status() ){
 	$PRUEBA->AVG( ["pmenudeo"] );
 	$PRUEBA->STD( ["pmenudeo"] );
 	$PRUEBA->GROUPBY( ["marca","rin"]);
-	$PRUEBA->PAGE( 0,10 );
-	$PRUEBA->LOWER_EQUAL( array("id"=>100) );
+	$PRUEBA->PAGE( 0, 25 );
+	//$PRUEBA->LOWER_EQUAL( array("id"=>100) );
 	$PRUEBA->ORDERBY( array("pmenudeo_COUNT"=>"DESC") );
-	$PRUEBA->saveAsView("yeyv");
 	$PRUEBA->execute();
-
-	//$PRUEBA->executeFree("SELECT * FROM productos", []);
 
 	echo "Raw: ".$PRUEBA->getRawQuery();
 	//echo "Free: ".$PRUEBA->FREE_query;

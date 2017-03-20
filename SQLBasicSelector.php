@@ -19,6 +19,10 @@ class SQLBasicSelector extends SQLBasicTableManager{
 
   public $FREE_query = "";
   public $FREE_binds = array();
+  public $isFreeMode = False;
+
+  public $OPERATIONS_query = "";
+  public $GROUPBY_query = "";
 
   public $data = array();
 
@@ -149,17 +153,25 @@ class SQLBasicSelector extends SQLBasicTableManager{
 		return $this->data;
   }
   public function getQuery(){
+    if( !$this->isFreeMode ){
       $this->COMPLETE_query =
-        $this->SELECT_query . " " .
-        $this->WHERE_query . " " .
-        $this->ORDERBY_query . " ".
-        $this->PAGINATION_query;
-      return $this->COMPLETE_query;
+          $this->SELECT_query . " " .
+          $this->WHERE_query . " " .
+          $this->GROUPBY_query . " " .
+          $this->ORDERBY_query . " ".
+          $this->PAGINATION_query;
+      $query = $this->COMPLETE_query;
+    }else{
+      $query = $this->FREE_query;
+    }
+    return $query;
   }
   public function getBinds(){
     $binds = [];
-    if( $this->whereExists() ){
-      $binds = $this->WHERE->binds;
+    if( !$this->isFreeMode ){
+      if( $this->whereExists() ){$binds = $this->WHERE->binds;}
+    }else{
+      $binds = $this->FREE_binds;
     }
     return $binds;
   }
@@ -204,21 +216,29 @@ class SQLBasicSelector extends SQLBasicTableManager{
 
   # Free Execution and Fetching Methods (SQLInjection UNSAFE)
   public function executeFree( $query, $binds=[] ){
-    $this->FREE_query = $query;
-    $this->FREE_binds= $binds;
+    $this->enterFreeMode($query, $binds);
     return $this->execute( $query, $binds );
+  }
+  public function enterFreeMode( $query, $binds){
+    $this->FREE_query = $query;
+    $this->FREE_binds = $binds;
+    $this->isFreeMode = True;
+  }
+  public function exitFreeMode(){
+    $this->FREE_query = "";
+    $this->FREE_binds = array();
+    $this->isFreeMode = False;
   }
 
   # Table Operations Methods
-  public function saveAsTable($TableName,$DATA_query=NULL,$binds=NULL){
+  public function saveAsTable($TableName){
     $TableName = strtolower($TableName);
     if( self::isSafeSQLString($TableName) ){
-      $DATA_query = (is_null($DATA_query)) ? $this->getQuery() : $DATA_query;
-      $binds = (is_null($binds)) ? $this->getBinds() : $binds;
+      $DATA_query = $this->getQuery();
 			$query =
         "DROP TABLE IF EXISTS $TableName;
         CREATE TABLE $TableName ( $DATA_query ); ";
-      $this->executeQueryWithBinds( $query , $binds );
+      $this->executeQueryWithBinds( $query , $this->getBinds() );
 		}else{
 			$this->ErrorManager->handleError("$TableName is not a valid table name." );
 		}
@@ -244,13 +264,12 @@ class SQLBasicSelector extends SQLBasicTableManager{
 		}
   }
   # View Operations Methods
-  public function saveAsView($ViewName,$DATA_query=NULL,$binds=NULL){
+  public function saveAsView($ViewName){
     $ViewName = strtolower($ViewName);
     if( self::isSafeSQLString($ViewName) ){
-      $DATA_query = (is_null($DATA_query)) ? $this->getQuery() : $DATA_query;
-      $binds = (is_null($binds)) ? $this->getBinds() : $binds;
+      $DATA_query = $this->getQuery();
 			$query = "CREATE OR REPLACE VIEW $ViewName AS ( $DATA_query ) ";
-      $this->executeQueryWithBinds( $query , $binds );
+      $this->executeQueryWithBinds( $query , $this->getBinds() );
 		}else{
 			$this->ErrorManager->handleError("$ViewName is not a valid view name." );
 		}

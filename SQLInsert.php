@@ -1,5 +1,4 @@
 <?php
-
 class SQLInsert extends SQLBasicTableManager{
   public $INSERT_query = "";
   public $ONDUPLICATE_query = "";

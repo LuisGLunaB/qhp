@@ -10,15 +10,15 @@ if( $SQLConnection->status() ){
 	$PRUEBA->execute();
 	echo $PRUEBA->getQuery();
 	*/
+
 	$data = [array("id" => 3213 ,"rin" => 11, "marca" => "Uno"),array("id" => 3214 ,"rin" => 12, "marca" => "Dos")];
 	$PRUEBA = new SQLInsert($con, "productos", ["id","rin","marca"]);
 	echo $PRUEBA->saveAsTable( "Muajaja", $data );
 	//$PRUEBA->execute();
 	//echo $PRUEBA->getQuery();
 
-	// Save as Table
-	// Refactoring
-	// Update, Delete, activate/deactivate
+	# Refactor: Connect, Insert
+	# Update, Delete, activate/deactivate
 }else{
 	echo $SQLConnection->message();
 }
