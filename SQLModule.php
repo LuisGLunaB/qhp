@@ -9,6 +9,7 @@ include_once("./SQLSummarySelector.php");
 include_once("./SQLWhereObject.php");
 
 include_once("./SQLInsert.php");
+include_once("./SQLUpdate.php");
 
 include_once("./ErrorManager.php");
 include_once("./DISPLAY.php");

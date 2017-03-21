@@ -16,7 +16,6 @@ class SQLBasicTableManager{
     $this->ErrorManager = new ErrorManager();
     $this->con = $con;
     $this->TableName = $TableName;
-    $this->fieldsMask = $fieldsMask;
     $this->updateFieldsMask($fieldsMask);
   }
 
@@ -72,6 +71,50 @@ class SQLBasicTableManager{
     return in_array($foreignField,$this->getTableFields());
   }
 
+  # Checking for specifcic Data Methods
+  public static function simpleWhere($assocWhere=[],$symbols="="){
+    $validSymbols = ["=",">",">=","<","<=","IN","LIKE"];
+    $binds = [];
+    $wheres = [];
+    $c = 0; # Binded values count
+    $s = 0; # Current Symbol count
+    $symbols = self::inputAsArray($symbols);
+    foreach($assocWhere as $field => $value){
+      $symbolOrIN = ( sizeof($value)==1 ) ? $symbols[$s] : "IN";
+      $symbolOrIN = ( in_array($symbolOrIN,$validSymbols) ) ? $symbolOrIN : "=";
+      $value = self::inputAsArray($value);
+      foreach($value as $v){
+        $binds[":$field$c"] = $v;
+        $c++;
+      }
+      $whereString = implode(", ", array_keys($binds) );
+      $wheres[] = "$field $symbolOrIN ( $whereString )";
+      $s++;
+    }
+    $wheres = implode(" AND ", $wheres);
+    $WHERE = ($wheres=="") ? "" : "WHERE $wheres";
+
+    return [$WHERE,$binds];
+  }
+  public function WhereCounter($assocWhere=[],$symbols="="){
+    $this->maskWithMyFields($assocWhere);
+    list($WHERE,$WHEREbinds) = self::simpleWhere($assocWhere,$symbols);
+
+    $query = "SELECT COUNT(*) AS count FROM $this->TableName ";
+    $query .= $WHERE.";";
+
+    $this->executeFetchTable( $query , $WHEREbinds );
+    $data = $this->fetchTable();
+    return $data[0]["count"];
+  }
+  public function EXISTS($assocWhere=[],$symbols="="){
+    $count = $this->WhereCounter($assocWhere,$symbols);
+    return ($count>0);
+  }
+  public function NOTEXISTS($assocWhere=[],$symbols="="){
+    return ( ! $this->EXISTS($assocWhere,$symbols) );
+  }
+
   # Fields Maskers Methods
   protected function maskFields(){
     if( $this->isFieldsMaskOn() ){
@@ -89,6 +132,22 @@ class SQLBasicTableManager{
   }
   protected function isFieldsMaskOn(){
     return !is_null($this->fieldsMask);
+  }
+  protected function maskWithMyMask(&$array){
+    if( self::is_assoc($array) ){
+      $array = self::maskAssocArray($array, $this->fieldsMask );
+    }else{
+      $array = self::maskArray($array, $this->fieldsMask );
+    }
+    return $array;
+  }
+  protected function maskWithMyFields(&$array){
+    if( self::is_assoc($array) ){
+      $array = self::maskAssocArray($array, $this->getTableFields() );
+    }else{
+      $array = self::maskArray($array, $this->getTableFields() );
+    }
+    return $array;
   }
 
   # Static Useful Masking and String Methods
@@ -188,6 +247,29 @@ class SQLBasicTableManager{
   public function executeFetchColumn($query){
     $this->executeQuery($query);
     return $this->fetchColumn($query);
+  }
+  public function executeFetchTable( $query, $binds ){
+    try{
+			$this->Query = $this->con['handler']->prepare( $query );
+			$this->Query->setFetchMode(PDO::FETCH_ASSOC);
+			$this->Query->execute( $binds );
+    }catch (Exception $e){
+      $this->ErrorManager->handleError("Error in FetchTable $this->TableName.", $e );
+		}
+  }
+  protected function fetchTable(){
+    $data = array();
+    if( $this->status() ){
+      $row = 0;
+      while( $QueryRow=$this->Query->fetch() ){
+        $QueryFields = ($row==0) ? array_keys($QueryRow) : $QueryFields;
+        foreach($QueryFields as $field){
+          $data[$row][$field] = $QueryRow[$field];
+        } //foreach
+        $row++;
+      } //while fetching
+    } //if status
+    return $data;
   }
   public function fetchColumn(){
     try{

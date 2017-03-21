@@ -146,8 +146,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->executeFetchTable( $query , $binds );
 
     $this->recordStatistics("BUILD");
-    $this->data = array();
-		$this->fetchExecutedTable();
+		$this->data = $this->fetchTable();
 
     $this->recordStatistics("STOP");
 		return $this->data;
@@ -174,27 +173,6 @@ class SQLBasicSelector extends SQLBasicTableManager{
       $binds = $this->FREE_binds;
     }
     return $binds;
-  }
-  public function executeFetchTable( $query, $binds ){
-    try{
-			$this->Query = $this->con['handler']->prepare( $query );
-			$this->Query->setFetchMode(PDO::FETCH_ASSOC);
-			$this->Query->execute( $binds );
-    }catch (Exception $e){
-      $this->ErrorManager->handleError("Error in FetchTable $this->TableName.", $e );
-		}
-  }
-  protected function fetchExecutedTable(){
-    if( $this->status() ){
-      $row = 0;
-      while( $QueryRow=$this->Query->fetch() ){
-        $QueryFields = ($row==0) ? array_keys($QueryRow) : $QueryFields;
-        foreach($QueryFields as $field){
-          $this->data[$row][$field] = $QueryRow[$field];
-        } //foreach
-        $row++;
-      } //while fetching
-    } //if status
   }
   protected function recordStatistics($command){
     if($command=="START"){

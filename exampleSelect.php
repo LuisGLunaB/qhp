@@ -3,6 +3,7 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
+
 	$PRUEBA = new SQLSummarySelector($con,"productos", ["id","rin"]);
 	$PRUEBA->UPPERCASE( ["marca"], "");
 	$PRUEBA->COUNT( ["pmenudeo"] );
@@ -13,10 +14,14 @@ if( $SQLConnection->status() ){
 	//$PRUEBA->LOWER_EQUAL( array("id"=>100) );
 	$PRUEBA->ORDERBY( array("pmenudeo_COUNT"=>"DESC") );
 	$PRUEBA->execute();
-
 	echo "Raw: ".$PRUEBA->getRawQuery();
-	//echo "Free: ".$PRUEBA->FREE_query;
 	DISPLAY::asTable($PRUEBA->data);
+
+	/*
+	$PRUEBA = new SQLSummarySelector($con,"productos");
+	echo $PRUEBA->EXISTS( array("id"=>[-10,11,20]) );
+	*/
+
 }else{
 	echo $SQLConnection->message();
 }
