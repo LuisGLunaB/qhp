@@ -76,19 +76,15 @@ class SQLSummarySelector extends SQLBasicSelector{
     $this->GROUPBY_query = "";
   }
 
-  public function getQuery(){
-    $this->SELECT_query = $this->getSelectWithOperations();
-    return parent::getQuery();
-  }
-
-  public function getSelectWithOperations(){
+  public function SELECT(){
     $query = "";
     if( $this->isFieldsMaskOn() ){
-      $query = "SELECT $this->commaSeparatedFields, $this->OPERATIONS_query FROM $this->TableName ";
+      $query = "SELECT $this->commaSeparatedFields, $this->OPERATIONS_query $this->MATCH_query FROM $this->TableName ";
     }else{
-      $query= "SELECT $this->OPERATIONS_query FROM $this->TableName ";
+      $query= "SELECT *, $this->OPERATIONS_query $this->MATCH_query FROM $this->TableName ";
     }
-    return $query;
+    $this->SELECT_query = $query;
+    return $this->SELECT_query;
   }
 
 }

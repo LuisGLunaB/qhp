@@ -7,6 +7,8 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public $SELECT_query = ""; # Just the first row of the query
   public $commaSeparatedFields = "";
 
+  public $MATCH_query = "";
+
   public $WHERE = NULL; # SQLWhereObject
   public $WHERE_query = "";
 
@@ -49,11 +51,28 @@ class SQLBasicSelector extends SQLBasicTableManager{
   }
   public function SELECT(){
     if( $this->isFieldsMaskOn() ){
-      $this->SELECT_query = "SELECT $this->commaSeparatedFields FROM $this->TableName ";
+      $this->SELECT_query = "SELECT $this->commaSeparatedFields $this->MATCH_query FROM $this->TableName ";
     }else{
-      $this->SELECT_query = "SELECT * FROM $this->TableName ";
+      $this->SELECT_query = "SELECT * $this->MATCH_query FROM $this->TableName ";
     }
     return $this->SELECT_query;
+  }
+
+  public function SEARCH($words,$fields,$precision=2){
+    if( is_array($words) ){
+      $words = implode(" ",$words);
+    }
+    $this->maskWithMyFields($fields);
+    $fieldsString = implode(", ",$fields);
+    switch ($precision) {
+        case 1: $MODE = "IN BOOLEAN MODE";break;
+        case 2: $MODE = "IN NATURAL LANGUAGE MODE";break;
+        case 3: $MODE = "WITH QUERY EXPANSION";break;
+        case 4: $MODE = "IN NATURAL LANGUAGE MODE WITH QUERY EXPANSION";break;
+        default: $MODE = "IN NATURAL LANGUAGE MODE";
+    }
+
+    $this->MATCH_query = ", MATCH ( $fieldsString ) AGAINST ('$words' $MODE ) as search_relevance ";
   }
 
   # Methods about $WHERE_query
@@ -66,9 +85,9 @@ class SQLBasicSelector extends SQLBasicTableManager{
 
     # Mask Where with valid Table Fields
     if( is_null($fieldsMask) ){
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, $this->getTableFields() );
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, [$this->getTableFields(),"search_relevance"] );
     }else{
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, [$fieldsMask,"search_relevance"] );
     }
 
     # Build Where and return it to this objects as a String.
@@ -104,14 +123,19 @@ class SQLBasicSelector extends SQLBasicTableManager{
   # Methods about $ORDERBY_query
   public function ORDERBY( $assocArray ){
     if($this->maskORDERBY){
-      $assocArray = self::maskAssocArray( $assocArray, $this->getTableFields() );
+      $assocArray = self::maskAssocArray( $assocArray, [$this->getTableFields(),"search_relevance"] );
     }
-    $orderElementsArray = $this->buildOrderByArray($assocArray,$validOrders=["ASC","DESC"]);
+    $orderElementsArray = $this->buildOrderByArray($assocArray);
     $orderElementsString = implode(", ", $orderElementsArray);
     $this->ORDERBY_query = "ORDER BY $orderElementsString ";
     return $this->ORDERBY_query;
   }
-  public function buildOrderByArray($assocArray,$validOrders){
+  public function ORDERBYRELEVANCE($ORD = "DESC"){
+    $this->ORDERBY_query = "ORDER BY search_relevance $ORD ";
+  }
+
+  public function buildOrderByArray($assocArray){
+    $validOrders = ["ASC","DESC"];
     $orderElementsArray = array();
     foreach($assocArray as $field => $order){
       $order = in_array($order,$validOrders) ? $order : "DESC";
@@ -154,7 +178,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public function getQuery(){
     if( !$this->isFreeMode ){
       $this->COMPLETE_query =
-          $this->SELECT_query . " " .
+          $this->SELECT() . " " .
           $this->WHERE_query . " " .
           $this->GROUPBY_query . " " .
           $this->ORDERBY_query . " ".
@@ -168,7 +192,9 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public function getBinds(){
     $binds = [];
     if( !$this->isFreeMode ){
-      if( $this->whereExists() ){$binds = $this->WHERE->binds;}
+      if( $this->whereExists() ){
+        $binds = $this->WHERE->binds;
+      }
     }else{
       $binds = $this->FREE_binds;
     }

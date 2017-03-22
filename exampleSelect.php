@@ -4,6 +4,7 @@ $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
 
+	/*
 	$PRUEBA = new SQLSummarySelector($con,"productos", ["id","rin"]);
 	$PRUEBA->UPPERCASE( ["marca"], "");
 	$PRUEBA->COUNT( ["pmenudeo"] );
@@ -13,6 +14,14 @@ if( $SQLConnection->status() ){
 	$PRUEBA->PAGE( 0, 25 );
 	//$PRUEBA->LOWER_EQUAL( array("id"=>100) );
 	$PRUEBA->ORDERBY( array("pmenudeo_COUNT"=>"DESC") );
+	$PRUEBA->execute();
+	echo "Raw: ".$PRUEBA->getRawQuery();
+	DISPLAY::asTable($PRUEBA->data);
+	*/
+
+	$PRUEBA = new SQLBasicSelector($con,"productos", ["id","marca","modelo","descripcion"]);
+	$PRUEBA->SEARCH( "Bridgestone Año 2005", ["marca","modelo","descripcion"]);
+	$PRUEBA->ORDERBY( array("search_relevance"=>"DESC") );
 	$PRUEBA->execute();
 	echo "Raw: ".$PRUEBA->getRawQuery();
 	DISPLAY::asTable($PRUEBA->data);
