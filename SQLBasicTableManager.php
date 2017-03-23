@@ -305,6 +305,17 @@ class SQLBasicTableManager{
       $this->ErrorManager->handleError("Error in FetchTable $this->TableName.", $e );
 		}
   }
+  public function executeFetchId( $query, $binds=[] ){
+    try{
+			$this->Query = $this->con['handler']->prepare( $query );
+			$this->Query->execute( $binds );
+      $this->lastId = $this->con['handler']->lastInsertId();
+    }catch (Exception $e){
+      $this->ErrorManager->handleError("Error in INSERT $this->TableName.", $e );
+		}
+    return $this->status();
+  }
+
   protected function fetchTable(){
     $data = array();
     if( $this->status() ){

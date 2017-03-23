@@ -23,7 +23,7 @@ class SQLUpdate extends SQLBasicTableManager{
     }
   }
   public function WHERE($assocWhere,$symbols="="){
-    return $this->BASICWHERE($assocWhere,$symbols);
+    $this->BASICWHERE($assocWhere,$symbols);
   }
   public function WHEREID($ids){
     $ids = self::inputAsArray($ids);
@@ -54,6 +54,7 @@ class SQLUpdate extends SQLBasicTableManager{
   public function SETPLUSMINUS($Array,$value=1){
     $value = (int) $value;
     $value = ($value>=0) ? "+$value" : "$value";
+
     $Array = self::inputAsArray($Array);
     $this->maskWithMyFields($Array);
     foreach($Array as $key){
@@ -69,18 +70,15 @@ class SQLUpdate extends SQLBasicTableManager{
 
   # Execution Methods
   public function execute(){
-    try{
-			$this->Query = $this->con['handler']->prepare( $this->getQuery() );
-			$this->Query->execute( $this->getBinds() );
-      $this->lastId = $this->con['handler']->lastInsertId();
-    }catch (Exception $e){
-      $this->ErrorManager->handleError("Error in INSERT $this->TableName.", $e );
-		}
-    return $this->status();
+    return $this->executeFetchId( $this->getQuery(), $this->getBinds() );
   }
   public function getQuery(){
     $SET = implode(", ",$this->SET_query);
-    return "$this->UPDATE_query SET $SET $this->WHERE_query;";
+    if($this->WHERE_query!=""){
+      return "$this->UPDATE_query SET $SET $this->WHERE_query;";
+    }else{
+      $this->ErrorManager->handleError("No WHERE clause specified on UPDATE $this->TableName." );
+    }
   }
   public function getBinds(){
     return array_merge($this->WHERE_binds,$this->SET_binds);
@@ -91,6 +89,7 @@ class SQLUpdate extends SQLBasicTableManager{
     $this->SET_query = "";
     $this->SET_binds = array();
     $this->WHERE_query = "";
+    $this->WHERE_binds = [];
   }
 
 }

@@ -73,6 +73,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
     }
 
     $this->MATCH_query = ", MATCH ( $fieldsString ) AGAINST ('$words' $MODE ) as search_relevance ";
+    $this->ORDERBYRELEVANCE();
   }
 
   # Methods about $WHERE_query
@@ -86,11 +87,12 @@ class SQLBasicSelector extends SQLBasicTableManager{
     # Mask Where with valid Table Fields
 
     if( is_null($fieldsMask) ){
-      $maskedAssocWhere = $this->maskWithMyFields($assocWhere);
+      $fieldsMask = $this->getTableFields();
     }else{
       $fieldsMask = $this->maskWithMyFields($fieldsMask);
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
     }
+    $fieldsMask[] = "search_relevance";
+    $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
 
     # Build Where and return it to this objects as a String.
     $this->WHERE->buildWhere($maskedAssocWhere, $symbol);
@@ -125,15 +127,17 @@ class SQLBasicSelector extends SQLBasicTableManager{
   # Methods about $ORDERBY_query
   public function ORDERBY( $assocArray ){
     if($this->maskORDERBY){
-      $assocArray = self::maskAssocArray( $assocArray, [$this->getTableFields(),"search_relevance"] );
+      $Allfields = $this->getTableFields();
+      $Allfields[] = "search_relevance";
+      $assocArray = self::maskAssocArray( $assocArray, $Allfields );
     }
     $orderElementsArray = $this->buildOrderByArray($assocArray);
     $orderElementsString = implode(", ", $orderElementsArray);
     $this->ORDERBY_query = "ORDER BY $orderElementsString ";
     return $this->ORDERBY_query;
   }
-  public function ORDERBYRELEVANCE($ORD = "DESC"){
-    $this->ORDERBY_query = "ORDER BY search_relevance $ORD ";
+  public function ORDERBYRELEVANCE(){
+    $this->ORDERBY( array("search_relevance"=>"DESC") );
   }
 
   public function buildOrderByArray($assocArray){
@@ -183,9 +187,14 @@ class SQLBasicSelector extends SQLBasicTableManager{
           $this->SELECT() . " " .
           $this->WHERE_query . " " .
           $this->GROUPBY_query . " " .
-          $this->ORDERBY_query . " ".
-          $this->PAGINATION_query;
+          $this->ORDERBY_query;
+
+      $this->COMPLETE_query = ($this->MATCH_query=="") ? $this->COMPLETE_query :
+        "SELECT * FROM ( $this->COMPLETE_query ) AS $this->TableName WHERE search_relevance > 0 ";
+      $this->COMPLETE_query .= " $this->PAGINATION_query;";
+
       $query = $this->COMPLETE_query;
+
     }else{
       $query = $this->FREE_query;
     }

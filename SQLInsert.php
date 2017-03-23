@@ -70,17 +70,13 @@ class SQLInsert extends SQLBasicTableManager{
 
   // Execution Methods
   public function execute(){
-    try{
-			$this->Query = $this->con['handler']->prepare( $this->getQuery() );
-			$this->Query->execute( $this->binds );
-      $this->lastId = $this->con['handler']->lastInsertId();
-    }catch (Exception $e){
-      $this->ErrorManager->handleError("Error in INSERT $this->TableName.", $e );
-		}
-    return $this->status();
+    return $this->executeFetchId( $this->getQuery(), $this->getBinds() );
   }
   public function getQuery(){
     return "$this->INSERT_query $this->ONDUPLICATE_query;";
+  }
+  public function getBinds(){
+    return$this->binds;
   }
   public function getLastId(){
     return $this->lastId;

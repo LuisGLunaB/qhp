@@ -5,6 +5,14 @@ class DISPLAY{
       echo $text;
     }
   }
+  protected static function NoDataMessage(){
+    return
+    '<div style="display: block; clear: both;">
+      <strong style="color: red !important;">
+        No hay datos para ésta búsqueda.
+      </strong>
+    </div>';
+  }
   public static function asJSON($data,$setHeader=True,$display=True){
     	if($setHeader){
         header('Content-Type: application/json');
@@ -29,25 +37,30 @@ class DISPLAY{
     }
   }
   public static function asTable($data,$class="",$display=True){
+    if( sizeof($data)>0){
     $table = '<table class="'.$class.'">';
-      # First row (headers)
-      $columns = array_keys($data[0]);
-      $table .= "<tr>";
-      foreach($columns as $column){
-        $table .= "<th>$column</th>";
-      }
-      $table .= "</tr>";
-
-      # All other rows
-      foreach($data as $row){
-        $table .= "<tr>";
+        # First row (headers)
+        $columns = array_keys($data[0]);
+        $table .= "<thead><tr>";
         foreach($columns as $column){
-          $table .= "<td>$row[$column]</td>";
+          $table .= "<th>$column</th>";
         }
-        $table .= "</tr>";
-      }
+        $table .= "</tr></thead>";
 
-    $table .= "</table>";
+        # All other rows
+      $table .= "<tbody>";
+        foreach($data as $row){
+          $table .= "<tr>";
+          foreach($columns as $column){
+            $table .= "<td>$row[$column]</td>";
+          }
+          $table .= "</tr>";
+        }
+      $table .= "</tbody>";
+      $table .= "</table>";
+    }else{
+      $table = self::NoDataMessage();
+    }
     self::showData( $table,$display);
     return $table;
   }
