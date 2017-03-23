@@ -3,19 +3,18 @@ include_once("./SQLModule.php");
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
-	/*
-	$PRUEBA = new SQLInsert($con, "productos", ["id","rin","marca"] );
-	$PRUEBA->INSERT( [array("id" => 3215 ,"rin" => 10, "marca" => "Uno0"),array("id" => 3216 ,"rin" => 20, "marca" => "Dos0")] );
-	$PRUEBA->ONDUPLICATE();
+	$PRUEBA = new SQLUpdate($con, "productos", ["id","rin","marca"] );
+	$set = array("rin" => 10013, "marca" => "Tr1es");
+	$where = array("id" => 3215);
+	$PRUEBA->UPDATE();
+	$PRUEBA->SETNOTACTIVE();
+	$PRUEBA->PLUSONE( ["ancho","alto"] );
+	$PRUEBA->MINUSONE( ["rin"] );
+
+	$PRUEBA->WHEREID( 3220 );
 	$PRUEBA->execute();
 	echo $PRUEBA->getQuery();
-	*/
 
-	$data = [array("id" => 3213 ,"rin" => 11, "marca" => "Uno"),array("id" => 3214 ,"rin" => 12, "marca" => "Dos")];
-	$PRUEBA = new SQLInsert($con, "productos", ["id","rin","marca"]);
-	echo $PRUEBA->saveAsTable( "Muajaja", $data );
-
-	# Update, Delete, activate/deactivate
 }else{
 	echo $SQLConnection->message();
 }

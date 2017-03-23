@@ -59,9 +59,9 @@ class SQLBasicSelector extends SQLBasicTableManager{
   }
 
   public function SEARCH($words,$fields,$precision=2){
-    if( is_array($words) ){
-      $words = implode(" ",$words);
-    }
+    if( is_array($words) ){$words = implode(" ",$words);}
+    $words = self::simpleStringWhiteListing($words);
+
     $this->maskWithMyFields($fields);
     $fieldsString = implode(", ",$fields);
     switch ($precision) {
@@ -84,10 +84,12 @@ class SQLBasicSelector extends SQLBasicTableManager{
     if( is_null($this->WHERE) ){ $this->WHERE = new SQLWhereObject(); }
 
     # Mask Where with valid Table Fields
+
     if( is_null($fieldsMask) ){
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, [$this->getTableFields(),"search_relevance"] );
+      $maskedAssocWhere = $this->maskWithMyFields($assocWhere);
     }else{
-      $maskedAssocWhere = self::maskAssocArray($assocWhere, [$fieldsMask,"search_relevance"] );
+      $fieldsMask = $this->maskWithMyFields($fieldsMask);
+      $maskedAssocWhere = self::maskAssocArray($assocWhere, $fieldsMask );
     }
 
     # Build Where and return it to this objects as a String.

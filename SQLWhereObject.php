@@ -36,7 +36,9 @@ class SQLWhereObject{
 
   # Symbol Whitelisting Methods
   public function checkForINSymbol($value,$symbol){
-    $symbol = ( is_array($value) ) ? "IN" : $symbol;
+    if( is_array($value) ){
+      $symbol = ( sizeof($value)<=1 ) ? $symbol : "IN";
+    }
     return $symbol;
   }
   public function forceValidSymbol($foreignSymbol){

@@ -1,22 +1,37 @@
 <?php
 class SQLBasicTableManager{
-  Protected $con = NULL; #SQLConnector->Connection
-  Protected $Query = NULL;
+  Public $con = NULL; #SQLConnector->Connection
+  protected $Query = NULL;
 
-  public $DatabaseTablesNames = NULL;
+  protected $DatabaseTablesNames = NULL;
 
-  public $TableName = ""; #Table or View Name
-  public $TableFields = NULL;
-  public $maskedFields = [];
-  public $fieldsMask = NULL;
+  protected $TableName = ""; #Table or View Name
+  protected $TableFields = NULL;
+  protected $maskedFields = [];
+  protected $fieldsMask = NULL;
 
-  Protected $ErrorManager;
+  Public $WHERE_query = "";
+  Public $WHERE_binds = [];
+
+  protected $ErrorManager;
 
   public function __construct($con, $TableName, array $fieldsMask = NULL ){
     $this->ErrorManager = new ErrorManager();
     $this->con = $con;
-    $this->TableName = $TableName;
+    $this->setTableName($TableName);
     $this->updateFieldsMask($fieldsMask);
+  }
+
+  # Getters
+  public function getTableNames(){return $this->DatabaseTablesNames;}
+  public function getTableName(){return $this->TableName;}
+  public function getFields(){return $this->TableFields;}
+  public function getMaskedFields(){return $this->maskedFields;}
+  public function getFieldsMask(){return $this->fieldsMask;}
+
+  # Setters
+  public function setTableName($TableName){
+    $this->TableName = self::simpleStringWhiteListing($TableName,"");
   }
 
   # TableNames Retrievers Methods
@@ -80,14 +95,20 @@ class SQLBasicTableManager{
     $s = 0; # Current Symbol count
     $symbols = self::inputAsArray($symbols);
     foreach($assocWhere as $field => $value){
+      $value = self::inputAsArray($value);
+      $s = ( sizeof($symbols)==1 ) ? 0 : $s;
       $symbolOrIN = ( sizeof($value)==1 ) ? $symbols[$s] : "IN";
       $symbolOrIN = ( in_array($symbolOrIN,$validSymbols) ) ? $symbolOrIN : "=";
+
+      $currentbinds = [];
       $value = self::inputAsArray($value);
       foreach($value as $v){
         $binds[":$field$c"] = $v;
+        $currentbinds[":$field$c"] = $v;
         $c++;
       }
-      $whereString = implode(", ", array_keys($binds) );
+
+      $whereString = implode(", ", array_keys($currentbinds) );
       $wheres[] = "$field $symbolOrIN ( $whereString )";
       $s++;
     }
@@ -113,6 +134,10 @@ class SQLBasicTableManager{
   }
   public function NOTEXISTS($assocWhere=[],$symbols="="){
     return ( ! $this->EXISTS($assocWhere,$symbols) );
+  }
+  public function BASICWHERE($assocWhere,$symbols="="){
+    $this->maskWithMyFields($assocWhere);
+    list($this->WHERE_query,$this->WHERE_binds) = $this->simpleWhere($assocWhere,$symbols);
   }
 
   # Fields Maskers Methods
@@ -186,6 +211,29 @@ class SQLBasicTableManager{
       }
   	}
   	return $isValid;
+  }
+  public static function stringWhiteListing($string,array $validCharacters,$wildcard=""){
+    $whiteString = [];
+  	$Characters = str_split($string);
+  	foreach($Characters as $char){
+  		if( in_array($char,$validCharacters) ){
+        $whiteString[] = $char;
+      }else{
+        $whiteString[] = $wildcard;
+      }
+  	}
+  	return implode("",$whiteString);
+  }
+  public static function simpleStringWhiteListing($string,$wildcard=""){
+    $validCharacters = "
+      ABCDEFGHIJKLMNOPQRSTUVWXYZ
+      abcdefghijklmnopqrstuvwxyz
+      ÑÁÉÍÓÚ
+      ñáéíóú
+      0123456789 -_.,
+    ";
+    $validCharacters = str_split($validCharacters);
+    return self::stringWhiteListing($string,$validCharacters,$wildcard);
   }
   public static function str_has($word,$text){
   	if (strpos($text, $word) !== false) {
