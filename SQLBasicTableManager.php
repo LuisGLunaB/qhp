@@ -13,14 +13,31 @@ class SQLBasicTableManager{
   Public $WHERE_query = "";
   Public $WHERE_binds = [];
 
+  public $lastId = NULL;
+
   protected $ErrorManager;
 
-  public function __construct($con, $TableName, array $fieldsMask = NULL ){
+  public function __construct($TableName, array $fieldsMask = NULL, $con=NULL ){
     $this->ErrorManager = new ErrorManager();
-    $this->con = $con;
+    $this->setConnection($con);
     $this->setTableName($TableName);
     $this->updateFieldsMask($fieldsMask);
   }
+
+  public function setConnection($con){
+    if( is_null($con) ){
+      $this->matchWithGlobalConnection();
+    }else{
+      $this->con = $con;
+    }
+  }
+  private function matchWithGlobalConnection(){
+		if( isset($GLOBALS["con"]) ){
+			$this->con = $GLOBALS["con"];
+		}else{
+      $this->ErrorManager->handleError("No Global Connection detected." );
+    }
+	}
 
   # Getters
   public function getTableNames(){return $this->DatabaseTablesNames;}

@@ -4,7 +4,7 @@ $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
 
-	$PRUEBA = new SQLSummarySelector($con,"productos", ["id","modelo","rin"]);
+	$PRUEBA = new SQLSummarySelector("productos", ["id","modelo","rin"]);
 	$PRUEBA->UPPERCASE( ["marca"], "");
 	$PRUEBA->COUNT( ["pmenudeo"] );
 	$PRUEBA->AVG( ["pmenudeo"] );

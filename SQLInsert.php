@@ -11,8 +11,8 @@ class SQLInsert extends SQLBasicTableManager{
   public $FLOATsize = 30;
   public $INTsize = 30;
 
-  public function __construct($con, $TableName, array $fieldsMask = NULL ){
-    parent::__construct($con,$TableName,$fieldsMask);
+  public function __construct($TableName, array $fieldsMask = NULL,$con=NULL){
+    parent::__construct($TableName,$fieldsMask,$con);
   }
 
   // $INSERT_query String Parsing
