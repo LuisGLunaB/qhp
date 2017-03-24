@@ -4,6 +4,7 @@ class ErrorManager{
 	Protected $status = True;
 	Protected $errorMessage = "";
 	Public $exitExecution = False;
+	Protected $e = NULL;
 
 	public function __construct(){
 		$this->matchGlobalDebuggingStatus();
@@ -19,6 +20,7 @@ class ErrorManager{
 	}
 	public function handleError($errorMessage, $e=NULL, $exitExecution = NULL ){
 		$this->errorMessage = $errorMessage;
+		$this->e = $e;
 		$this->status = False;
 
 		if( $this->weAreDebugging() ){
@@ -38,6 +40,10 @@ class ErrorManager{
 			exit;
 		}
 		return $exitExecution;
+	}
+
+	public function getErrorObject(){
+		return $this->e;
 	}
 
 	public static function showErrorMessage($errorMessage){

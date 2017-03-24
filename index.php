@@ -19,10 +19,23 @@ if( $SQLConnection->status() ){
 
 	include_once("./UserObject.php");
 	$User = new UserObject();
-	//$User->NewUser( array("username"=>"Luis", "password"=>"lol2") );
-	$User->LoginWithCookie();
-	print_r($User->UserData);
+	$NewUserData = array("username"=>"Luis2", "password"=>"lol2");
 
+	$User->NewUser( $NewUserData );
+
+	/*
+	if( $User->Login("Luis2","lol2") ){
+		echo "Login:";
+		print_r($User->UserData);
+	}
+	*/
+
+	/*
+	if( $User->LoginWithCookie() ){
+		echo "Cookie:";
+		print_r($User->UserData);
+	}
+	*/
 
 }else{
 	echo $SQLConnection->message();
