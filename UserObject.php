@@ -1,8 +1,9 @@
 <?php
-// New User: return True/False?, Login?
+//Refactor tryToLogin / loadUserData
 class UserObject extends SQLBasicSelector{
   public $con = NULL;
-  protected $CookieName = "_xa";
+  protected $IdentificationCookie = "_xa";
+  protected $DeviceCookie = "_ja";
   public $TableName = "users";
 
   protected $id = NULL;
@@ -21,6 +22,9 @@ class UserObject extends SQLBasicSelector{
   protected $IdentificationFields = ['id','username','email'];
   public $lastId = NULL;
 
+  public $LoginCallback = "index.php";
+  public $LogoutCallback = "index.php";
+
   public function __construct($con=NULL){
     parent::__construct($this->TableName, NULL, $con);
   }
@@ -37,8 +41,13 @@ class UserObject extends SQLBasicSelector{
       $maskedUserData["password"] = $obscuredPassword;
       $maskedUserData["is_verified"] = (int) $is_verified;
 
-      //Try to Insert and LogIn
+      //Try to Insert
       $this->lastId = $this->INSERTUSER($maskedUserData);
+      if( is_null($this->lastId) ){
+        $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
+      }
+
+      // Login if everything ran properly
       if( $login and $this->status() ){
         $this->LoginWithObscuredPassword( $this->lastId, $obscuredPassword );
       }
@@ -101,15 +110,6 @@ class UserObject extends SQLBasicSelector{
     return $this->tryToLogin($credentials);
   }
   # Autentication and Login methods
-  public function credentialsAreValid($credentials){
-    $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
-    if( sizeof($credentials)>0 ){
-      return $success = $this->EXISTS($credentials);
-    }else{
-      $this->ErrorManager->handleError("No hay suficientes datos para verificar el acceso.");
-      return False;
-    }
-  }
   protected function tryToLogin($credentials,$LogoutOnFailure=True){
     $success = False;
 
@@ -126,11 +126,21 @@ class UserObject extends SQLBasicSelector{
       $this->ErrorManager->handleError( $this->message() );
     }
 
-    if( (! $success) and $LogoutOnFailure ){
+    if( ( ! $success ) and $LogoutOnFailure ){
       $this->Logout();
     }
     return $success;
   }
+  public function credentialsAreValid($credentials){
+    $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
+    if( sizeof($credentials)>0 ){
+      return $this->EXISTS($credentials);
+    }else{
+      $this->ErrorManager->handleError("No hay suficientes datos para verificar el acceso.");
+      return False;
+    }
+  }
+
   # Load User Data from Database
   protected function loadUserData($credentials){
     $success = False;
@@ -162,28 +172,18 @@ class UserObject extends SQLBasicSelector{
     $success = False;
     if(sizeof($UserData)>0){
       $success = True;
-      $UserData = $this->maskWithMyFields($UserData);
-      $this->UserData = $UserData;
+      $this->UserData = $this->maskWithMyFields($UserData);
 
       foreach($this->UserData as $key => $value){
         try{
-          eval('$this->'.$key.' = &$this->UserData["'.$key.'"];');
+          $evaluateNewAttribute = '$this->'.$key.' = &$this->UserData["'.$key.'"];';
+          eval($evaluateNewAttribute);
         }catch (Exception $e){
           $success = False;
           $this->ErrorManager->handleError("Error al extraer información del usuario.", $e, $exitExecution=True);
         }
       }
-      /*
-      $this->id = &$this->UserData["id"];
-      $this->username = &$this->UserData["username"];
-      $this->password = &$this->UserData["password"];
-      $this->email = &$this->UserData["email"];
-      $this->type = &$this->UserData["type"];
-      $this->level = &$this->UserData["level"];
 
-      $this->is_verified = &$this->UserData["is_verified"];
-      $this->is_active = &$this->UserData["is_active"];
-      */
       return $success;
     }else{
       $this->ErrorManager->handleError("El Registro de éste usuario está vacío.");
@@ -194,6 +194,10 @@ class UserObject extends SQLBasicSelector{
     $this->setCredentialsCookie();
   }
   public function setCredentialsCookie(){
+    $this->setIdentificationCookie();
+    $this->setDeviceCookie();
+  }
+  public function setIdentificationCookie(){
     $RandomInteger = rand(10000,99999);
     $RandomString = sha1("a".rand(10000,99999));
 
@@ -201,31 +205,56 @@ class UserObject extends SQLBasicSelector{
     $RealString = $this->password;
 
     $value = "$RandomString:$RealInteger:$RandomInteger:$RealString";
-    $OneDay = (86400 * 30);
-    $_COOKIE[$this->CookieName] = $value;
-    setcookie($this->CookieName, $value, time() + ($OneDay*90), "/");
+    $OneDay = 86400;
+
+    $_COOKIE[$this->IdentificationCookie] = $value;
+    setcookie($this->IdentificationCookie, $value, time() + ($OneDay*100), "/");
+  }
+  public function setDeviceCookie(){
+    $OneDay = 86400;
+    $value = self::getDeviceCookie();
+    $_COOKIE[$this->DeviceCookie] = $value;
+    setcookie($this->DeviceCookie, $value, time() + ($OneDay*100), "/");
+  }
+  protected static function getDeviceCookie(){
+    $salt = "viveriveniversumvivusvici";
+    return sha1($salt . $_SERVER["REMOTE_ADDR"] . $_SERVER["HTTP_USER_AGENT"]);
   }
 
-  // REFACTORING
+  // Login with Cookie or Session
   public function LoginWithCookie(){
     $success = False;
-    if( $this->isCookieSet() ){
-      list($id,$obscuredPassword) = $this->getCredentialsFromCookie();
-      $success = $this->LoginWithObscuredPassword($id,$obscuredPassword);
-      if( ! $success ){
-        $this->ErrorManager->handleError( $this->message() );
+    if( $this->isCookieLoginPossible() ){
+      if( $this->isThisDeviceValid() ){
+        list($id,$obscuredPassword) = $this->getCredentialsFromCookie();
+        $success = $this->LoginWithObscuredPassword($id,$obscuredPassword);
+        if( ! $success ){
+          $this->ErrorManager->handleError( $this->message() );
+        }
+      }else{
+        $this->ErrorManager->handleError( "Error al entrar a la cuenta: sesión duplicada." );
+        $this->Logout();
       }
     }
     return $success;
   }
-  public function isCookieSet(){
-    return key_exists($this->CookieName,$_COOKIE);
+  public function isCookieLoginPossible(){
+    return ($this->isIdentificationCookieSet() and $this->isDeviceCookieSet() );
+  }
+  protected function isThisDeviceValid(){
+    return ( $_COOKIE[$this->DeviceCookie] == self::getDeviceCookie() );
+  }
+  public function isIdentificationCookieSet(){
+    return key_exists($this->IdentificationCookie,$_COOKIE);
+  }
+  public function isDeviceCookieSet(){
+    return key_exists($this->DeviceCookie,$_COOKIE);
   }
   public function getCredentialsFromCookie(){
     $id = NULL;
     $obscuredPassword = NULL;
-    if( $this->isCookieSet() ){
-      list($rubish1,$id,$rubish2,$obscuredPassword) = explode(":",$_COOKIE[$this->CookieName]);
+    if( $this->isIdentificationCookieSet() ){
+      list($rubish1,$id,$rubish2,$obscuredPassword) = explode(":",$_COOKIE[$this->IdentificationCookie]);
     }
     return [$id,$obscuredPassword];
   }
@@ -253,12 +282,21 @@ class UserObject extends SQLBasicSelector{
     $this->unsetCredentialsCookie();
   }
   public function unsetCredentialsCookie(){
-    if( $this->isCookieSet() ){
-      setcookie($this->CookieName, "", time() - 100000, "/");
-      if(isset($_GET[$this->CookieName] )){
-        unset( $_GET[$this->CookieName] );
+
+    if( $this->isIdentificationCookieSet() ){
+      setcookie($this->IdentificationCookie, "", time() - 100000, "/");
+      if(isset($_GET[$this->IdentificationCookie] )){
+        unset( $_GET[$this->IdentificationCookie] );
       }
     }
+
+    if( $this->isDeviceCookieSet() ){
+      setcookie($this->DeviceCookie, "", time() - 100000, "/");
+      if(isset($_GET[$this->DeviceCookie] )){
+        unset( $_GET[$this->DeviceCookie] );
+      }
+    }
+
   }
 
   # Other methods

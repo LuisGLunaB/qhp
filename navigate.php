@@ -9,11 +9,9 @@ if( $SQLConnection->status() ){
 	$NewUserData = array("username"=>"Luis2", "password"=>"lol2");
 	//$User->NewUser( $NewUserData );
 
-	echo $User->Login("Luis2","lol2");
+	echo $User->LoginWithCookie();
 
 	print_r($User->UserData);
-
-
 }else{
 	echo $SQLConnection->message();
 }
@@ -23,4 +21,4 @@ if( $SQLConnection->status() ){
 
 ?>
 
-<a href="navigate.php">Navigate</a>
+<a href="index.php">Index</a>

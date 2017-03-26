@@ -328,6 +328,7 @@ class SQLBasicTableManager{
 			$this->Query->execute( $binds );
       $this->lastId = $this->con['handler']->lastInsertId();
     }catch (Exception $e){
+      $this->lastId = NULL;
       $this->ErrorManager->handleError("Error in INSERT $this->TableName.", $e );
 		}
     return $this->status();

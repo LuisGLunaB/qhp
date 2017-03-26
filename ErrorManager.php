@@ -19,7 +19,7 @@ class ErrorManager{
 		return $this->debugging;
 	}
 	public function handleError($errorMessage, $e=NULL, $exitExecution = NULL ){
-		$this->errorMessage = $errorMessage;
+		$this->errorMessage = utf8_encode($errorMessage);
 		$this->e = $e;
 		$this->status = False;
 
