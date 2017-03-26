@@ -6,20 +6,14 @@ $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
 	include_once("./UserObject.php");
 	$User = new UserObject();
-	$NewUserData = array("username"=>"Luis2", "password"=>"lol2");
+	$NewUserData = array("email"=>"Luis".rand(100,10000), "password"=>"lol2");
+
 	//$User->NewUser( $NewUserData );
-
-	echo $User->Login("Luis2","lol2");
-
+	$User->Login("Luis2","lol2");
 	print_r($User->UserData);
-
-
 }else{
 	echo $SQLConnection->message();
 }
-
-
-
 
 ?>
 

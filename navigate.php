@@ -9,7 +9,7 @@ if( $SQLConnection->status() ){
 	$NewUserData = array("username"=>"Luis2", "password"=>"lol2");
 	//$User->NewUser( $NewUserData );
 
-	echo $User->LoginWithCookie();
+	$User->LoginWithCookie();
 
 	print_r($User->UserData);
 }else{
