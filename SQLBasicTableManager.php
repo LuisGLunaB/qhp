@@ -1,6 +1,6 @@
 <?php
 class SQLBasicTableManager{
-  Public $con = NULL; #SQLConnector->Connection
+  protected $con = NULL; #SQLConnector->Connection
   protected $Query = NULL;
 
   protected $DatabaseTablesNames = NULL;

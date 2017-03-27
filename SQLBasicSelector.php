@@ -2,7 +2,7 @@
 
 class SQLBasicSelector extends SQLBasicTableManager{
   public $COMPLETE_query = ""; # Complete query to be executed
-  public $TableName = "";
+  protected $TableName = "";
 
   public $SELECT_query = ""; # Just the first row of the query
   public $commaSeparatedFields = "";

@@ -1,115 +1,34 @@
 <?php
-// Refactor
 class UserObject extends SQLBasicSelector{
-  public $con = NULL;
+  # Meta variables
+  protected $con = NULL;
+  protected $TableName = "users";
   protected $IdentificationCookie = "_xa";
   protected $DeviceCookie = "_ja";
-  public $TableName = "users";
 
+  # User attributes
   public $user_id = NULL;
+  public $email = "";
   public $username = "";
   public $password = "";
-  public $email = "";
   public $type = "";
   public $level = NULL;
   public $is_verified = NULL;
   public $is_active = NULL;
 
+  # UserObject attributes
   public $UserData = array();
-  protected $is_logged = False;
-
+  public $is_logged = False;
+  public $lastId = NULL;
   protected $CredentialsFields = ['user_id','username','email',"password"];
   protected $IdentificationFields = ['user_id','username','email'];
-  public $lastId = NULL;
 
+  ## METHODS ##
   public function __construct($con=NULL){
     parent::__construct($this->TableName, NULL, $con);
   }
 
-  # New User Methods
-  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=1){
-    $success = False;
-    if( $this->hasEnoughIdentificationFields($UserData) ){
-        if( ! $this->checkIfUserExists($UserData) ){
-            // Grant basic access
-            $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
-            $this->grantBaseAccess($maskedUserData);
-
-            // Set Password and Verification
-            $regularPassword = $maskedUserData["password"];
-            $obscuredPassword = self::ObscurePassword( $maskedUserData["password"] );
-            $maskedUserData["password"] = $obscuredPassword;
-            $maskedUserData["is_verified"] = (int) $is_verified;
-
-            $this->lastId = $this->INSERTUSER($maskedUserData);
-            if( ! is_null($this->lastId) ){
-                if( $LoginAfterInsert ){
-                  $UsernameOrEmail = ( key_exists("username",$maskedUserData) )
-                    ? $maskedUserData["username"] : $maskedUserData["email"];
-                  if( $this->Login($UsernameOrEmail,$regularPassword) ){
-                    $success = True;
-                    # Bravo! You created a New User AND you logged in with it.
-                  }else{
-                    $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
-                  } //Check if Login was succesful
-                }else{
-                  $success = True;
-                  # Bravo! You created a New User (but you didn't Log in)
-                }
-            }else{
-                $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
-            } // Check If Insertion was succesful If
-        }else{
-          $this->ErrorManager->handleError("Este usuario ya existe." );
-          $this->Logout();
-        } // Check if user alredy Exists If
-    }else{
-      $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo." );
-    } // Not enough credentials If
-
-    return $success;
-  }
-  public function checkIfUserExists(array $UserData){
-    $MaskedUserData = self::maskAssocArray($UserData,$this->IdentificationFields);
-    $Exists = $this->EXISTS($MaskedUserData);
-    return $Exists;
-  }
-  public function grantBaseAccess(&$NewUserData){
-    $NewUserData["level"] = 0;
-    $NewUserData["type"] = "Regular";
-    $NewUserData["is_active"] = 1;
-  }
-  public function INSERTUSER($NewUserData){
-    $this->lastId = NULL;
-    $maskedUserData = self::maskAssocArray($NewUserData,$this->getTableFields());
-
-    if( $this->hasEnoughIdentificationFields($maskedUserData) ){
-      $INSERT = new SQLInsert( $this->TableName, NULL, $this->con );
-    	$INSERT->INSERT( $maskedUserData );
-    	if( ! $INSERT->execute() ){
-        $this->ErrorManager->handleError("Error al crear nuevo usuario.", $INSERT->ErrorManager->getErrorObject() );
-      }
-    }else{
-      $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo.");
-    }
-
-    return $INSERT->lastId;
-  }
-  public function hasEnoughIdentificationFields($NewUserData){
-    return (
-      ( key_exists("username",$NewUserData)
-        or key_exists("email",$NewUserData)
-        or key_exists("user_id",$NewUserData) )
-      and key_exists("password",$NewUserData)
-    );
-  }
-  public static function ObscurePassword($password){
-    $sal = "viveriveniversumvivusvici";
-    $encrypted_password = sha1($sal.$password);
-    return $encrypted_password;
-  }
-
-  # Login Methods
+  # Login methods
   public function Login($emailOrUsername,$password){
     $success = False;
     $this->clearUserData();
@@ -137,20 +56,20 @@ class UserObject extends SQLBasicSelector{
   }
   public function LoginWithObscuredPassword($user_id,$obscuredPassword){
     $this->clearUserData();
-
     $credentials = array(
       "user_id"=> (int) $user_id,
       "password"=>$obscuredPassword
     );
+
     return $this->tryToLogin($credentials);
   }
-  # Autentication and Login methods
   protected function tryToLogin($credentials,$LogoutOnFailure=True){
     $success = False;
 
     $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
     if( $this->hasEnoughIdentificationFields($credentials) ){
         if( $this->credentialsAreValid($credentials) ){
+
             $UserData = $this->pullUserData($credentials);
             if( $this->status() ){
                 if( $this->setUserData($UserData) ){
@@ -172,6 +91,8 @@ class UserObject extends SQLBasicSelector{
 
     return $success;
   }
+
+  # Authentication and Security methods
   public function credentialsAreValid($credentials){
     $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
     if( sizeof($credentials)>0 ){
@@ -181,12 +102,28 @@ class UserObject extends SQLBasicSelector{
       return False;
     }
   }
+  public function hasEnoughIdentificationFields($NewUserData){
+    return
+    (
+      (    key_exists("username",$NewUserData)
+        or key_exists("email",$NewUserData)
+        or key_exists("user_id",$NewUserData)
+      )and key_exists("password",$NewUserData)
+    );
+  }
+  protected function ObscurePassword($password){
+    return sha1( $this->getSalt() . $password );
+  }
+  private function getSalt(){
+    return "viveriveniversumvivusvici";
+  }
 
-  # Load User Data from Database
+  # Data retrieving methods
   protected function pullUserData($credentials){
     $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
     $this->WHERE($credentials);
     $this->PAGE( 0, 1);
+
     $UserData = $this->execute();
     $this->WHERE->clear();
 
@@ -202,15 +139,14 @@ class UserObject extends SQLBasicSelector{
       $this->is_logged = $success;
       $this->UserData = $UserData;
       foreach($this->UserData as $key => $value){
-          try{
-            eval('$this->'.$key.' = &$this->UserData["'.$key.'"];');
-          }catch (Exception $e){
-            $success = False;
-            $this->is_logged = $success;
-            $this->ErrorManager->handleError("Error al extraer información del usuario.", $e, $exitExecution=True);
-          } // Try to evaluate attribute Assigments
+        try{
+          eval('$this->'.$key.' = &$this->UserData["'.$key.'"];');
+        }catch (Exception $e){
+          $success = False;
+          $this->is_logged = False;
+          $this->ErrorManager->handleError("Error al extraer información del usuario.", $e, $exitExecution=True);
+        } // Try to evaluate attribute Assigments
       } // Foreach Loop
-
     }else{
       $success = False;
       $this->ErrorManager->handleError("El Registro de éste usuario está vacío.");
@@ -218,6 +154,8 @@ class UserObject extends SQLBasicSelector{
 
     return $success;
   }
+
+  # Credentials setters
   public function saveCredentials(){
     $this->setCredentialsCookie();
   }
@@ -235,28 +173,70 @@ class UserObject extends SQLBasicSelector{
     $IntegerNoise1 = rand(10,99);
     $IntegerNoise2 = rand(10,99);
 
-    $value = "$RandomString:$IntegerNoise1$RealInteger$IntegerNoise2:$RandomInteger:$RealString";
-    $OneDay = 86400;
-    $_COOKIE[$this->IdentificationCookie] = $value;
-    setcookie($this->IdentificationCookie, $value, time() + ($OneDay*100), "/",$_SERVER['SERVER_NAME']);
+    $PlusThreeMonths = (time() + 86400 * 90);
+    $CookieValue = "$RandomString:$IntegerNoise1$RealInteger$IntegerNoise2:$RandomInteger:$RealString";
+    $_COOKIE[$this->IdentificationCookie] = $CookieValue;
+    setcookie($this->IdentificationCookie, $CookieValue, $PlusThreeMonths, "/",$_SERVER['SERVER_NAME']);
   }
   public function setDeviceCookie(){
-    $OneDay = 86400;
-    $value = self::getDeviceCookie();
-    $_COOKIE[$this->DeviceCookie] = $value;
-    setcookie($this->DeviceCookie, $value, time() + ($OneDay*100), "/",$_SERVER['SERVER_NAME']);
+    $PlusThreeMonths = (time() + 86400 * 90);
+    $CookieValue = self::getDeviceCookie();
+    $_COOKIE[$this->DeviceCookie] = $CookieValue;
+    setcookie($this->DeviceCookie, $CookieValue, $PlusThreeMonths, "/",$_SERVER['SERVER_NAME']);
   }
-  protected static function getDeviceCookie(){
-    $salt = "viveriveniversumvivusvici";
-    return sha1($salt . $_SERVER["REMOTE_ADDR"] . $_SERVER["HTTP_USER_AGENT"]);
+  protected function getDeviceCookie(){
+    return sha1( $this->getSalt() . $_SERVER["REMOTE_ADDR"] . $_SERVER["HTTP_USER_AGENT"] );
   }
 
-  // Login with Cookie or Session
+  # Logout and Cleaning methods
+  public function Logout(){
+    $this->clearUserData();
+    $this->deleteCredentials();
+  }
+  public function clearUserData(){
+    $this->user_id = NULL;
+    $this->email = "";
+    $this->username = "";
+    $this->password = "";
+
+    $this->type = "";
+    $this->level = NULL;
+    $this->is_verified = NULL;
+    $this->is_active = NULL;
+
+    $this->UserData = array();
+    $this->is_logged = False;
+  }
+  protected function deleteCredentials(){
+    $this->unsetCredentialsCookie();
+  }
+  protected function unsetCredentialsCookie(){
+    $MinusOneYear = (time() - 86400 * 365);
+
+    if( $this->isIdentificationCookieSet() ){
+      setcookie($this->IdentificationCookie, "deleted", $MinusOneYear, "/", $_SERVER['SERVER_NAME'] );
+      if(isset($_COOKIE[$this->IdentificationCookie] )){
+        unset( $_COOKIE[$this->IdentificationCookie] );
+      }
+    }
+
+    if( $this->isDeviceCookieSet() ){
+      setcookie($this->DeviceCookie, "deleted", $MinusOneYear, "/", $_SERVER['SERVER_NAME']);
+      if(isset($_COOKIE[$this->DeviceCookie] )){
+        unset( $_COOKIE[$this->DeviceCookie] );
+      }
+    }
+
+  }
+
+  # Login with Cookie methods
   public function LoginWithCookie(){
     $success = False;
+
     if( $this->isCookieLoginPossible() ){
       if( $this->isThisDeviceValid() ){
         list($user_id,$obscuredPassword) = $this->getCredentialsFromCookie();
+
         if( $this->LoginWithObscuredPassword($user_id,$obscuredPassword) ){
           $success = True;
         }else{
@@ -267,13 +247,15 @@ class UserObject extends SQLBasicSelector{
         $this->Logout();
       }
     }
+
     return $success;
   }
   public function isCookieLoginPossible(){
-    return ($this->isIdentificationCookieSet() and $this->isDeviceCookieSet() );
-  }
-  protected function isThisDeviceValid(){
-    return ( $_COOKIE[$this->DeviceCookie] == self::getDeviceCookie() );
+    return
+    (
+      $this->isIdentificationCookieSet()
+      and $this->isDeviceCookieSet()
+    );
   }
   public function isIdentificationCookieSet(){
     return key_exists($this->IdentificationCookie,$_COOKIE);
@@ -281,65 +263,104 @@ class UserObject extends SQLBasicSelector{
   public function isDeviceCookieSet(){
     return key_exists($this->DeviceCookie,$_COOKIE);
   }
+  public function isThisDeviceValid(){
+    return ( $_COOKIE[$this->DeviceCookie] == self::getDeviceCookie() );
+  }
   public function getCredentialsFromCookie(){
     $user_id = NULL;
     $obscuredPassword = NULL;
+
     if( $this->isIdentificationCookieSet() ){
       list($rubish1,$noisy_id,$rubish2,$obscuredPassword) = explode(":",$_COOKIE[$this->IdentificationCookie]);
-
       $noisy_id = strval($noisy_id);
       $user_id = (int) substr($noisy_id,2,-2);
-
     }
+
     return [$user_id,$obscuredPassword];
   }
 
-  # Logout and Cleaning Methods
-  public function Logout(){
-    $this->clearUserData();
-    $this->deleteCredentials();
-  }
-  protected function clearUserData(){
-    $this->user_id = NULL;
-    $this->username = "";
-    $this->password = "";
-    $this->email = "";
-    $this->type = "";
-    $this->level = NULL;
+  # New User methods
+  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=1){
+    $success = False;
+    if( $this->hasEnoughIdentificationFields($UserData) ){
+        if( ! $this->checkIfUserExists($UserData) ){
 
-    $this->is_verified = NULL;
-    $this->is_active = NULL;
+            // Mask and Grant base access
+            $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
+            $maskedUserData = $this->grantBaseAccess($maskedUserData);
+            $maskedUserData["is_verified"] = (int) $is_verified;
 
-    $this->UserData = array();
-    $this->is_logged = False;
+            // Get password variables for Insertion and further Login
+            $regularPassword = $maskedUserData["password"];
+            $obscuredPassword = self::ObscurePassword( $maskedUserData["password"] );
+            $maskedUserData["password"] = $obscuredPassword;
+
+            // Try to Insert New User
+            $this->lastId = $this->INSERTUSER($maskedUserData);
+            if( ! is_null($this->lastId) ){
+                if( $LoginAfterInsert ){
+                  $UsernameOrEmail =
+                      (key_exists("username",$maskedUserData)) ?
+                      $maskedUserData["username"] : $maskedUserData["email"];
+                  if( $this->Login($UsernameOrEmail,$regularPassword) ){
+                    # Bravo! You created a New User AND you logged in with it.
+                    $success = True;
+                  }else{
+                    $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
+                  } //Check if Login was succesful
+                }else{
+                  # Bravo! You created a New User (but you didn't Log in)
+                  $success = True;
+                }
+            }else{
+                $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
+            } // Check If Insertion was succesful If
+        }else{
+          $this->ErrorManager->handleError("Este usuario ya existe." );
+          $this->Logout();
+        } // Check if user alredy Exists If
+    }else{
+      $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo." );
+    } // Not enough credentials If
+
+    return $success;
   }
-  public function deleteCredentials(){
-    $this->unsetCredentialsCookie();
+  public function checkIfUserExists(array $UserData){
+    $MaskedUserData = self::maskAssocArray($UserData,$this->IdentificationFields);
+    return ( $this->EXISTS($MaskedUserData) );
   }
-  public function unsetCredentialsCookie(){
-    $OneYear = 86400 * 365;
-    if( $this->isIdentificationCookieSet() ){
-      setcookie($this->IdentificationCookie, "deleted", time() - $OneYear, "/", $_SERVER['SERVER_NAME'] );
-      if(isset($_COOKIE[$this->IdentificationCookie] )){
-        unset( $_COOKIE[$this->IdentificationCookie] );
+  protected function grantBaseAccess($NewUser){
+    $NewUser["level"] = 0;
+    $NewUser["type"] = "Regular";
+    $NewUser["is_active"] = 1;
+
+    return $NewUser;
+  }
+  protected function INSERTUSER($NewUserData){
+    $this->lastId = NULL;
+    $maskedUserData = self::maskAssocArray($NewUserData,$this->getTableFields());
+
+    if( $this->hasEnoughIdentificationFields($maskedUserData) ){
+      $INSERT = new SQLInsert( $this->TableName, NULL, $this->con );
+    	$INSERT->INSERT( $maskedUserData );
+    	if( $INSERT->execute() ){
+        // Insertion was succesful;
+        // $this->lastId has been retrieved properly;
+      }else{
+        $this->ErrorManager->handleError("Error al crear nuevo usuario.", $INSERT->ErrorManager->getErrorObject() );
       }
+    }else{
+      $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo.");
     }
 
-    if( $this->isDeviceCookieSet() ){
-      setcookie($this->DeviceCookie, "deleted", time() - $OneYear, "/", $_SERVER['SERVER_NAME']);
-      if(isset($_COOKIE[$this->DeviceCookie] )){
-        unset( $_COOKIE[$this->DeviceCookie] );
-      }
-    }
-
+    return $INSERT->lastId;
   }
 
   # Other methods
-  public function isLogged(){
-    return $this->is_logged;
-  }
-  public static function getROOT(){
-    $root = (!empty($_SERVER['HTTPS']) ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . '/';
-    return $root;
+  public static function ROOT(){
+    // Get Full domain's URL
+    $http = ( ! empty($_SERVER["HTTPS"]) ? "https":"http");
+    $ROOT =  "$http://$_SERVER[HTTP_HOST]/";
+    return $ROOT;
   }
 }
