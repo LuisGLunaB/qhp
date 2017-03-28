@@ -284,37 +284,41 @@ class UserObject extends SQLBasicSelector{
     $success = False;
     if( $this->hasEnoughIdentificationFields($UserData) ){
         if( ! $this->checkIfUserExists($UserData) ){
+            if( self::isValidEmail($UserData["email"]) ){
+                // Mask and Grant base access
+                $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
+                $maskedUserData = $this->grantBaseAccess($maskedUserData);
+                $maskedUserData["is_verified"] = (int) $is_verified;
 
-            // Mask and Grant base access
-            $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
-            $maskedUserData = $this->grantBaseAccess($maskedUserData);
-            $maskedUserData["is_verified"] = (int) $is_verified;
+                // Get password variables for Insertion and further Login
+                $regularPassword = $maskedUserData["password"];
+                $obscuredPassword = self::ObscurePassword( $maskedUserData["password"] );
+                $maskedUserData["password"] = $obscuredPassword;
 
-            // Get password variables for Insertion and further Login
-            $regularPassword = $maskedUserData["password"];
-            $obscuredPassword = self::ObscurePassword( $maskedUserData["password"] );
-            $maskedUserData["password"] = $obscuredPassword;
-
-            // Try to Insert New User
-            $this->lastId = $this->INSERTUSER($maskedUserData);
-            if( ! is_null($this->lastId) ){
-                if( $LoginAfterInsert ){
-                  $UsernameOrEmail =
-                      (key_exists("username",$maskedUserData)) ?
-                      $maskedUserData["username"] : $maskedUserData["email"];
-                  if( $this->Login($UsernameOrEmail,$regularPassword) ){
-                    # Bravo! You created a New User AND you logged in with it.
-                    $success = True;
-                  }else{
-                    $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
-                  } //Check if Login was succesful
+                // Try to Insert New User
+                $this->lastId = $this->INSERTUSER($maskedUserData);
+                if( ! is_null($this->lastId) ){
+                    if( $LoginAfterInsert ){
+                        $UsernameOrEmail =
+                            (key_exists("username",$maskedUserData)) ?
+                            $maskedUserData["username"] : $maskedUserData["email"];
+                        if( $this->Login($UsernameOrEmail,$regularPassword) ){
+                          # Bravo! You created a New User AND you logged in with it.
+                          $success = True;
+                        }else{
+                          $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
+                        } //Check if Login was succesful
+                    }else{
+                      # Bravo! You created a New User (but you didn't Log in)
+                      $success = True;
+                    }
                 }else{
-                  # Bravo! You created a New User (but you didn't Log in)
-                  $success = True;
-                }
+                    $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
+                } // Check If Insertion was succesful If
             }else{
-                $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
-            } // Check If Insertion was succesful If
+              $this->ErrorManager->handleError("El email no es válido." );
+              $this->Logout();
+            } // Check if Email is valid
         }else{
           $this->ErrorManager->handleError("Este usuario ya existe." );
           $this->Logout();
@@ -357,6 +361,43 @@ class UserObject extends SQLBasicSelector{
   }
 
   # Other methods
+  public static function isValidEmail($email){
+		$isValid = True;
+    $atIndex = strrpos($email, "@");
+    if ( is_bool($atIndex) && !$atIndex ){
+       $isValid = False;
+    }else{
+
+       $domain = substr($email, $atIndex+1);
+       $local = substr($email, 0, $atIndex);
+       $localLen = strlen($local);
+       $domainLen = strlen($domain);
+
+       if ($localLen < 1 || $localLen > 64){
+          $isValid = False;
+       }else if ($domainLen < 1 || $domainLen > 255){
+          $isValid = False;
+       }else if ($local[0] == '.' || $local[$localLen-1] == '.'){
+          $isValid = False;
+       }else if ( preg_match('/\\.\\./', $local) ){
+          $isValid = False;
+       }else if ( ! preg_match('/^[A-Za-z0-9\\-\\.]+$/', $domain) ){
+          $isValid = False;
+       }else if ( preg_match('/\\.\\./', $domain) ){
+          $isValid = False;
+       }else if ( ! preg_match('/^(\\\\.|[A-Za-z0-9!#%&`_=\\/$\'*+?^{}|~.-])+$/', str_replace("\\\\","",$local) ) ){
+          if ( ! preg_match('/^"(\\\\"|[^"])+"$/',str_replace("\\\\","",$local) ) ){
+             $isValid = False;
+          }
+       }
+
+       if ( $isValid && ! (checkdnsrr($domain,"MX") || checkdnsrr($domain,"A")) ){
+          $isValid = False;
+       }
+    }
+    return $isValid;
+	}
+
   public static function ROOT(){
     // Get Full domain's URL
     $http = ( ! empty($_SERVER["HTTPS"]) ? "https":"http");

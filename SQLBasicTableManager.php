@@ -247,7 +247,7 @@ class SQLBasicTableManager{
       abcdefghijklmnopqrstuvwxyz
       ÑÁÉÍÓÚ
       ñáéíóú
-      0123456789 -_.,
+      0123456789 +*-_.,
     ";
     $validCharacters = str_split($validCharacters);
     return self::stringWhiteListing($string,$validCharacters,$wildcard);
