@@ -1,23 +1,20 @@
 <?php
-include_once("./SQLModule.php");
+include_once("./Loaders/LOADMODULE_ALL.php");
+
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 
 if( $SQLConnection->status() ){
-	include_once("./UserObject.php");
 	$User = new UserObject();
 	$NewUserData = array("username"=>"Luis2", "password"=>"lol2");
-	//$User->NewUser( $NewUserData );
 
+	//$User->NewUser( $NewUserData );
 	$User->LoginWithCookie();
 
 	print_r($User->UserData);
 }else{
 	echo $SQLConnection->message();
 }
-
-
-
 
 ?>
 

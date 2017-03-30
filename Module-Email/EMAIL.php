@@ -2,7 +2,7 @@
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
 
-class EMAILER{
+class EMAIL{
 	Public $From = NULL;
 	Public $To = NULL;
 	Public $Title = NULL;
@@ -62,7 +62,7 @@ class EMAILER{
 		if( ! is_null($Template) ){
 			$CompleteEmail = $Template;
 			foreach($messageArray as $key => $string){
-				$CompleteEmail = str_replace("@#$key#@",$string,$CompleteEmail);
+				$CompleteEmail = str_replace("@@$key@@",$string,$CompleteEmail);
 			}
 		}else{
 			$CompleteEmail = $messageArray["message"];
@@ -77,7 +77,7 @@ class EMAILER{
 				if( self::isValidEmail($this->From) ){
 						if( self::isValidEmail($this->To) ){
 								try{
-										$this->status = mail($this->To, $this->Title, $CompleteEmail, $this->getHeaders() );
+										$this->status = mail($this->To, $this->Title, $CompleteEmail, $this->getHeaders(),"-f$this->From" );
 										if( ! $this->status ){
 												$this->message = "El correo no es válido para ser enviado.";
 										}
@@ -193,13 +193,15 @@ class EMAILER{
   }
 }
 
-$debugging = True;
-$EMAIL = new EMAILER( "contacto@mkti.mx", "luis.g.luna18@gmail.com", "Prueba de envío ñ", "Hola mundóñ!");
 
+$debugging = True;
+$EMAIL = new EMAIL( "contacto@mkti.mx", "luis.g.luna18@gmail.com", "Prueba de envío ñ", "Hola mundóñ!");
+$EMAIL->SetTemplate( MODULE_ROUTE_Email . "verification_template.html" );
 if( $EMAIL->Send() ) {
 	echo "Bien.";
 }else{
 	echo "Mal: $EMAIL->message() ";
 }
+
 
 ?>
