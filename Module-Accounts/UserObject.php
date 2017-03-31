@@ -2,7 +2,7 @@
 class UserObject extends SQLBasicSelector{
   # Meta variables
   protected $con = NULL;
-  protected $TableName = "users";
+  public $TableName = "users";
   protected $IdentificationCookie = "_xa";
   protected $DeviceCookie = "_ja";
 
@@ -20,12 +20,27 @@ class UserObject extends SQLBasicSelector{
   public $UserData = array();
   public $is_logged = False;
   public $lastId = NULL;
-  protected $CredentialsFields = ['user_id','username','email',"password"];
-  protected $IdentificationFields = ['user_id','username','email'];
+
+  # Identification Fields
+  public $field_user_id = "user_id";
+  public $field_username = "username";
+  public $field_email = "email";
+  public $field_password = "password";
+
+  public $field_verification_key = "verification_key";
+  public $field_is_verified= "is_verified";
+
+  protected $CredentialsFields = [];
+  protected $IdentificationFields = [];
 
   ## METHODS ##
   public function __construct($con=NULL){
     parent::__construct($this->TableName, NULL, $con);
+    $this->setCredentialsFields();
+  }
+  public function setCredentialsFields(){
+       $this->CredentialsFields = [ $this->field_user_id, $this->field_username, $this->field_email, $this->field_password ];
+    $this->IdentificationFields = [ $this->field_user_id, $this->field_username, $this->field_email ];
   }
 
   # Login methods
@@ -404,4 +419,50 @@ class UserObject extends SQLBasicSelector{
     $ROOT =  "$http://$_SERVER[HTTP_HOST]/";
     return $ROOT;
   }
+}
+
+function VerifyUser($verificationid){
+  $User = new UserObject();
+  $verficationWhere = array("$User->field_verification_key" => $verificationid);
+
+  if( $User->EXISTS($verficationWhere) ){
+    require_once( MODULE_ROUTE_SQL . "SQLUpdate.php" );
+    $UPDATE = new SQLUpdate( $User->TableName, [ $User->field_verification_key, $User->field_is_verified ], $User->getConnection() );
+    list( $verification, $id) = explode("-",$verificationid,2);
+  	$set = array(
+      "$User->field_verification_key" => "",
+      "$User->field_is_verified" => 1
+    );
+  	$UPDATE->SET( $set );
+    $UPDATE->WHERE( $verficationWhere );
+  	if( $UPDATE->execute() ){
+      return True;
+    }else{
+      echo "Error al actualizar el estado de verificación del usuario. $UPDATE->message() ";
+      return False;
+    }
+  }else{
+    echo "El link de verficación no es válido.";
+    return False;
+  }
+}
+
+function CreateVerificationKey($user_id){
+  $user_id = (int) $user_id;
+  require_once( MODULE_ROUTE_SQL . "SQLUpdate.php" );
+
+  $key = sha1( rand(1,100000000) ) . "-" . $user_id;
+  $User = new UserObject();
+  $UPDATE = new SQLUpdate( $User->TableName, [ $User->field_verification_key ], $User->getConnection() );
+
+  $UPDATE->SET( array("$User->field_verification_key" => $key) );
+  $UPDATE->WHERE( array("$User->field_user_id" => $user_id) );
+
+  if( $UPDATE->execute() ){
+    return $key;
+  }else{
+    echo $UPDATE->message();
+    return NULL;
+  }
+
 }

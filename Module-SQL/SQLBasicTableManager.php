@@ -5,7 +5,7 @@ class SQLBasicTableManager{
 
   protected $DatabaseTablesNames = NULL;
 
-  protected $TableName = ""; #Table or View Name
+  public $TableName = ""; #Table or View Name
   protected $TableFields = NULL;
   protected $maskedFields = [];
   protected $fieldsMask = NULL;
@@ -28,12 +28,12 @@ class SQLBasicTableManager{
     if( is_null($con) ){
       $this->matchWithGlobalConnection();
     }else{
-      $this->con = $con;
+      $this->connect($con);
     }
   }
   private function matchWithGlobalConnection(){
 		if( isset($GLOBALS["con"]) ){
-			$this->con = $GLOBALS["con"];
+			$this->connect($GLOBALS["con"]);
 		}else{
       $this->ErrorManager->handleError("No Global Connection detected." );
     }
@@ -345,16 +345,45 @@ class SQLBasicTableManager{
         } //foreach
         $row++;
       } //while fetching
+      $this->Query->closeCursor();
     } //if status
     return $data;
   }
   public function fetchColumn(){
     try{
       return $this->Query->fetchAll(PDO::FETCH_COLUMN);
+      $this->Query->closeCursor();
     }catch(Exception $e){
       $this->ErrorManager->handleError("Error in FETCH_COLUMN $this->TableName.", $e );
       return NULL;
     }
+  }
+
+  public function connect($con){
+    $this->con = $con;
+  }
+  public function isConnected(){
+    $is_connected = False;
+
+    if ( ! is_null($this->con) ){
+      try{
+        $this->con['handler']->getAttribute(PDO::ATTR_CONNECTION_STATUS);
+        $is_connected = True;
+      }catch(exception $e){
+        $is_connected = False;
+      }
+    }else{
+      $is_connected = False;
+    }
+
+    return $is_connected;
+  }
+  public function disconnect(){
+    $this->con = NULL;
+  }
+
+  public function getConnection(){
+    return $this->con;
   }
 
   # ErrorManager state callers

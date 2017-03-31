@@ -1,10 +1,11 @@
 <?php
-include_once("./SQLModule.php");
+include_once("../Loaders/LOADMODULE_ALL.php");
 $SQLConnection = new SQLConnector("localhost","test","root","");
 $con = $SQLConnection->getConnector();
 if( $SQLConnection->status() ){
 
 	$PRUEBA = new SQLSummarySelector("productos", ["id","modelo","rin"]);
+
 	$PRUEBA->UPPERCASE( ["marca"], "");
 	$PRUEBA->COUNT( ["pmenudeo"] );
 	$PRUEBA->AVG( ["pmenudeo"] );

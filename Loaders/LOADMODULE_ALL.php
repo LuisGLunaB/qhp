@@ -1,9 +1,8 @@
 <?php
 
-//define("MODULE_ROUTE", "$_SERVER[DOCUMENT_ROOT]/" );
-define("MODULE_ROUTE", "$_SERVER[DOCUMENT_ROOT]/backend-modules/" );
+//define("MODULE_ROUTE", "$_SERVER[DOCUMENT_ROOT]/" ); // Server
+define("MODULE_ROUTE", "$_SERVER[DOCUMENT_ROOT]/backend-modules/" ); // Local
 define("CONFIGURATIONS_ROUTE", MODULE_ROUTE . "Configurations/" );
-echo MODULE_ROUTE;
 
 require_once( CONFIGURATIONS_ROUTE . "debugging.php" );
 require_once( MODULE_ROUTE . "Loaders/LOADMODULE_Functionals.php" );

@@ -6,8 +6,8 @@ class SQLUpdate extends SQLBasicTableManager{
   public $WHERE_query = "";
   public $WHERE_binds = [];
 
-  public function __construct($con, $TableName, array $fieldsMask = NULL ){
-    parent::__construct($con,$TableName,$fieldsMask);
+  public function __construct($TableName, array $fieldsMask = NULL, $con = NULL ){
+    parent::__construct($TableName,$fieldsMask,$con);
     $this->UPDATE();
   }
 
