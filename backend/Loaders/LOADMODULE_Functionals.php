@@ -1,4 +1,5 @@
 <?php
+require_once( ROOT . "/backend/Loaders/SET_MODULE_ROUTE.php");
 define("MODULE_ROUTE_Functionals", MODULE_ROUTE . "Module-Functionals/" );
 
 require_once( MODULE_ROUTE_Functionals . "ErrorManager.php");
