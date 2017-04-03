@@ -405,10 +405,12 @@ class UserObject extends SQLBasicSelector{
              $isValid = False;
           }
        }
-
+       //Check MX and A registers online for given email
+       /*
        if ( $isValid && ! (checkdnsrr($domain,"MX") || checkdnsrr($domain,"A")) ){
           $isValid = False;
        }
+       */
     }
     return $isValid;
 	}
