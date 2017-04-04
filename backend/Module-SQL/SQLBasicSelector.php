@@ -230,6 +230,16 @@ class SQLBasicSelector extends SQLBasicTableManager{
   }
 
   # Free Execution and Fetching Methods (SQLInjection UNSAFE)
+  public function free( $query, $binds=[] ){
+    return $this->executeFree($query, $binds);
+  }
+  public function CALL( $functionName, $argumentsArray ){
+    return NULL;
+  }
+  public function CALLDATA( $procedureName, $argumentsArray ){
+    return NULL;
+  }
+
   public function executeFree( $query, $binds=[] ){
     $this->enterFreeMode($query, $binds);
     return $this->execute( $query, $binds );
