@@ -124,6 +124,20 @@ class SQLBasicSelector extends SQLBasicTableManager{
     return ( !is_null($this->WHERE) );
   }
 
+  public function TOTAL(){
+    $query = "SELECT COUNT(*) AS count FROM $this->TableName ";
+    $binds = [];
+    
+    if( $this->whereExists() ){
+      $query .= $this->WHERE->get().";";
+      $binds = $this->WHERE->binds;
+    }
+
+    $this->executeFetchTable( $query , $binds );
+    $count = $this->fetchTable();
+    return $count[0]["count"];
+  }
+
   # Methods about $ORDERBY_query
   public function ORDERBY( $assocArray ){
     if($this->maskORDERBY){
