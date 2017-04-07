@@ -2,10 +2,39 @@
 
 class NAVIGATE{
   public static $emptyValues =
-    [""," ","  ","-","--","ALL","All","Todos","TODOS","Todas","TODAS",".","_",NULL,
+    [NULL,""," ","  ","-","--","ALL","All","Todos","TODOS","Todas","TODAS",".","_",
     "NONE","None","Ninguno","NINGUNO","Ninguna","NINGUNA",
     "Ningunos","Ningunas","NINGUNOS","NINGUNAS","Nada","NADA","Sin filtro","Sin filtros",
     "No filter","No filters","Without filter","Without filters"];
+
+  public static function ParseRequest($REQUEST,$fields=NULL){
+    $Array = self::IgnoreEmptyValues($REQUEST);
+    if( ! is_null($fields) ){
+      $Array = self::SetToNULLIfNotInRequest($Array,$fields);
+    }
+    return $Array;
+  }
+  public static function IgnoreEmptyValues($REQUEST){
+    $Masked = array();
+    foreach( $REQUEST as $key => $value){
+      if( self::hasValue($value) ){
+        $Masked[$key] = $value;
+      }
+    }
+    return $Masked;
+  }
+
+  public static function SetToNULLIfNotInRequest($REQUEST,$fields){
+    $Array = array();
+    foreach( $fields as $key ){
+      if( ! array_key_exists($key,$REQUEST) ){
+        $Array[$key] = NULL;
+      }else{
+        $Array[$key] = $REQUEST[$key];
+      }
+    }
+    return $Array;
+  }
 
   public static function PaginationBar($page,$limit,$total,$options=5){
     list($start_page, $current_page, $end_page, $last_page) = self::PaginationVariables($page,$limit,$total,$options);
@@ -37,33 +66,6 @@ class NAVIGATE{
     return $symbol.number_format( $x, 2, ".", ",");
   }
 
-  public static function getCategoriesCount($ViewName,$id=1,$WHERE_query="",$WHERE_binds = []){
-    return NULL;
-  }
-  public static function getFieldCount($ViewName,$id_field,$field,$WHERE_query="",$WHERE_binds = []){
-    $COUNT = new SQLBasicSelector($ViewName);
-    if( $COUNT->isValidTable() and $COUNT->isValidField($field) and $COUNT->isValidField($id_field)){
-      $field_name = ($id_field==$field) ? ($field."_name") : $field;
-      $data = $COUNT->free("
-        SELECT
-          $id_field,
-          $field AS $field_name,
-          COUNT($field) AS ".$field."_count
-        FROM $ViewName
-        $WHERE_query
-        GROUP BY $id_field
-        ORDER BY ".$field."_count DESC
-      " , $WHERE_binds );
-      if ( ! $COUNT->status() ){
-        $data = NULL;
-      }
-    }else{
-      $data = NULL;
-    }
-
-    return $data;
-  }
-
   public static function buildFormSelect($Table,$selected_value=NULL,$default="--"){
     $keys = array_keys($Table[0]);
     $name = "name=$keys[0]";
@@ -71,9 +73,8 @@ class NAVIGATE{
     $text_field = $keys[1];
     $count_field = ( sizeof($keys) > 2) ? $keys[2] : NULL;
 
-    $has_selected = False;
+    $select = "<option value=''>$default</option>";
     $selected = "";
-    $select = "";
 
     foreach( $Table as $row ){
       $value = $row[$value_field];
@@ -81,18 +82,9 @@ class NAVIGATE{
       $count = ( is_null($count_field) ) ? "" : " ($row[$count_field])";
       if( self::isEmptyValue($value) ){ continue; }
 
-      if( is_null($selected_value) or ($selected_value != $value) ){
-        $selected = "";
-      }else{
-        $selected = "selected='selected'";
-        $has_selected = True;
-      }
-
+      $selected = ( is_null($selected_value) or ($selected_value != $value) )
+        ? "" : "selected='selected'";
       $select .= "<option $selected value='$value'>$text$count</option>";
-    }
-
-    if( ! $has_selected ){
-      $select = "<option selected value=''>$default</option>".$select;
     }
 
     return "<select $name >$select</select>";
@@ -134,6 +126,36 @@ class NAVIGATE{
   public static function getCategories($id,$ASC=True){
     $id = (int) $id;
     return self::getFieldOptions("product_categories_$id","category_".$id."_name",$ASC);
+  }
+
+  public static function getCategoriesCount($ViewName,$id=1,$WHERE_query="",$WHERE_binds = []){
+    $id = (int) $id;
+    $id_field = "category_".$id."_id";
+    $field = "category_".$id."_name";
+    return self::getFieldCount($ViewName,$id_field,$field,$WHERE_query,$WHERE_binds);
+  }
+  public static function getFieldCount($ViewName,$id_field,$field,$WHERE_query="",$WHERE_binds = []){
+    $COUNT = new SQLBasicSelector($ViewName);
+    if( $COUNT->isValidTable() and $COUNT->isValidField($field) and $COUNT->isValidField($id_field)){
+      $field_name = ($id_field==$field) ? ($field."_name") : $field;
+      $data = $COUNT->free("
+        SELECT
+          $id_field,
+          $field AS $field_name,
+          COUNT($field) AS ".$field."_count
+        FROM $ViewName
+        $WHERE_query
+        GROUP BY $id_field
+        ORDER BY ".$field."_count DESC
+      " , $WHERE_binds );
+      if ( ! $COUNT->status() ){
+        $data = NULL;
+      }
+    }else{
+      $data = NULL;
+    }
+
+    return $data;
   }
 
   public static function hasValue($value){

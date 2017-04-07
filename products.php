@@ -2,26 +2,29 @@
   $ROOT = "."; define("ROOT", $ROOT);
   include_once( ROOT . "/backend/Loaders/LOADMODULE_SQL_BASIC.php");
   /* Enviroment: $SQLConnection, $con */
+
   if( $SQLConnection->status() ){
-    $PRODUCTS = new SQLBasicSelector("products_view_ledcity");
-    $PRODUCTS->PAGE(0,20);
-    $TOTAL = $PRODUCTS->TOTAL();
+
+    $ViewName = "products_view_ledcity";
+    $FilterFields = [ "category_1_id", "category_2_id", "wattsW" ];
+    $FILTER = NAVIGATE::ParseRequest($_GET, $FilterFields);
+
+    $page = 0; $limit = 20;
+    $PRODUCTS = new SQLBasicSelector( "products_view_ledcity" );
+    $PRODUCTS->WHERE( $FILTER , $FilterFields );
+    $PRODUCTS->PAGE( $page , $limit );
     $PRODUCTS->execute();
+    $total = $PRODUCTS->TOTAL();
 
-    /*
-    TODO:
-      - Make getCategoriesCount call getFieldsCount
-      - Refactor NAVIGATE
-      - Parse POST:
-        1. Fill with NULLs given expected keys ( is_null($_POST[x]) )
-        2. Ignore emptyValues mask ( isset($_POST[x]) )
-    */
+    list($WHERE_query, $WHERE_binds) = $PRODUCTS->WHERE->getWHERE();
 
-    $distinct_count = NAVIGATE::getFieldCount("products_view_ledcity","voltage","voltage");
-    echo NAVIGATE::buildFormSelect($distinct_count);
+    $OPTIONS_category_1 = NAVIGATE::getCategoriesCount($ViewName,1,$WHERE_query,$WHERE_binds); //If cat 1 selected: Ignore WHERES
+    $OPTIONS_category_2 = NAVIGATE::getCategoriesCount($ViewName,2,$WHERE_query,$WHERE_binds);
+    $OPTIONS_wattsW = NAVIGATE::getFieldCount($ViewName,"wattsW","wattsW",$WHERE_query,$WHERE_binds);
 
-    $distinct_count = NAVIGATE::getFieldCount("products_view_ledcity","category_1_id","category_1_name");
-    echo NAVIGATE::buildFormSelect($distinct_count);
+    $SELECT_category_1 = NAVIGATE::buildFormSelect($OPTIONS_category_1, $FILTER["category_1_id"] );
+    $SELECT_category_2 = NAVIGATE::buildFormSelect($OPTIONS_category_2, $FILTER["category_2_id"] );
+    $SELECT_wattsW = NAVIGATE::buildFormSelect($OPTIONS_wattsW, $FILTER["wattsW"] );
 
   }
 
@@ -34,12 +37,19 @@
     <title></title>
   </head>
   <body>
-    <?php
-    echo NAVIGATE::buildCategorySelect(1);
-    echo NAVIGATE::buildCategorySelect(2);
 
-    echo NAVIGATE::PaginationBar(0,20,$TOTAL);
-    DISPLAY::asTable( $PRODUCTS->data );
-    ?>
+    <form id="form" class="form" action="" method="get" enctype="multipart/form-data">
+      <?php
+      print_r($FILTER);
+
+      echo $SELECT_category_1;
+      echo $SELECT_category_2;
+      echo $SELECT_wattsW;
+
+      ?>
+      <input type="submit" name="submit" value="Enviar">
+    </form>
+
+    <?php DISPLAY::asTable( $PRODUCTS->data ); ?>
   </body>
 </html>

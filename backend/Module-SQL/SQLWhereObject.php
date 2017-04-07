@@ -13,14 +13,16 @@ class SQLWhereObject{
   }
   public function buildWhere( array $assocWhere, $symbol = "=" ){
     foreach($assocWhere as $key => $value){
-      $symbol = $this->checkForINSymbol($value,$symbol);
-      $symbol = $this->forceValidSymbol($symbol);
-      $value = SQLBasicTableManager::inputAsArray($value);
+      if( ! is_null($value) ){
+        $symbol = $this->checkForINSymbol($value,$symbol);
+        $symbol = $this->forceValidSymbol($symbol);
+        $value = SQLBasicTableManager::inputAsArray($value);
 
-      $bindedNamesArray = $this->bindAndCountWheres($value);
+        $bindedNamesArray = $this->bindAndCountWheres($value);
 
-      $bindedNamesString = implode(", ", $bindedNamesArray);
-      $this->queryElements[] = "$key $symbol ( $bindedNamesString )";
+        $bindedNamesString = implode(", ", $bindedNamesArray);
+        $this->queryElements[] = "$key $symbol ( $bindedNamesString )";
+      }
     }
   }
   protected function bindAndCountWheres($value){
@@ -58,6 +60,10 @@ class SQLWhereObject{
   }
   protected function hasQueryElements(){
     return ( sizeof($this->queryElements)!=0 );
+  }
+
+  public function getWHERE(){
+    return [ $this->get(), $this->binds ];
   }
 
   public function clear(){

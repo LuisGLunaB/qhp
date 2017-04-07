@@ -98,6 +98,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->WHERE->buildWhere($maskedAssocWhere, $symbol);
     $this->WHERE_query = $this->WHERE->get();
     return $this->WHERE_query;
+
   }
   public function GREATER( array $assocWhere, $fieldsMask = NULL ){
     return $this->WHERE( $assocWhere, $fieldsMask, $symbol=">");
@@ -127,7 +128,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
   public function TOTAL(){
     $query = "SELECT COUNT(*) AS count FROM $this->TableName ";
     $binds = [];
-    
+
     if( $this->whereExists() ){
       $query .= $this->WHERE->get().";";
       $binds = $this->WHERE->binds;
