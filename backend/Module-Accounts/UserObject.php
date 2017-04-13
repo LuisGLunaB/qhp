@@ -16,6 +16,8 @@ class UserObject extends SQLBasicSelector{
   public $is_verified = NULL;
   public $is_active = NULL;
 
+  public $new_user_level = 1;
+
   # UserObject attributes
   public $UserData = array();
   public $is_logged = False;
@@ -107,6 +109,14 @@ class UserObject extends SQLBasicSelector{
     return $success;
   }
 
+  # Functionals
+  public static function FullLoginWithCookieLevel($required_level=1, $redirect_url=NULL){
+    $User = new UserObject();
+    $User->LoginWithCookie();
+    $User->assertLevel($required_level,$redirect_url);
+    return $User;
+  }
+
   # Authentication and Security methods
   public function credentialsAreValid($credentials){
     $credentials = self::maskAssocArray($credentials,$this->CredentialsFields);
@@ -131,6 +141,14 @@ class UserObject extends SQLBasicSelector{
   }
   private function getSalt(){
     return "viveriveniversumvivusvici";
+  }
+  public function isLogged(){
+    return $this->is_logged;
+  }
+  public function assertLevel($required_level=1, $redirect_url=NULL ){
+    if( (!$this->isLogged()) or ($this->level < $required_level) ){
+      $this->Logout($redirect_url);
+    }
   }
 
   # Data retrieving methods
@@ -204,9 +222,12 @@ class UserObject extends SQLBasicSelector{
   }
 
   # Logout and Cleaning methods
-  public function Logout(){
+  public function Logout($redirect_url=NULL){
     $this->clearUserData();
     $this->deleteCredentials();
+    if( !is_null($redirect_url) ){
+      header("Location: $redirect_url ");
+    }
   }
   public function clearUserData(){
     $this->user_id = NULL;
@@ -295,11 +316,11 @@ class UserObject extends SQLBasicSelector{
   }
 
   # New User methods
-  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=1){
+  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=1,$checkRegisters=False){
     $success = False;
     if( $this->hasEnoughIdentificationFields($UserData) ){
         if( ! $this->checkIfUserExists($UserData) ){
-            if( self::isValidEmail($UserData["email"]) ){
+            if( self::isValidEmail($UserData["email"],$checkRegisters) ){
                 // Mask and Grant base access
                 $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
                 $maskedUserData = $this->grantBaseAccess($maskedUserData);
@@ -349,8 +370,7 @@ class UserObject extends SQLBasicSelector{
     return ( $this->EXISTS($MaskedUserData) );
   }
   protected function grantBaseAccess($NewUser){
-    $NewUser["level"] = 0;
-    $NewUser["type"] = "Regular";
+    $NewUser["level"] = $this->new_user_level;
     $NewUser["is_active"] = 1;
 
     return $NewUser;
@@ -376,7 +396,7 @@ class UserObject extends SQLBasicSelector{
   }
 
   # Other methods
-  public static function isValidEmail($email){
+  public static function isValidEmail($email,$checkRegisters=False){
 		$isValid = True;
     $atIndex = strrpos($email, "@");
     if ( is_bool($atIndex) && !$atIndex ){
@@ -405,12 +425,14 @@ class UserObject extends SQLBasicSelector{
              $isValid = False;
           }
        }
-       //Check MX and A registers online for given email
-       /*
-       if ( $isValid && ! (checkdnsrr($domain,"MX") || checkdnsrr($domain,"A")) ){
-          $isValid = False;
+
+       if( $checkRegisters ){
+         //Check MX and A registers online for given email
+         if ( $isValid && ! (checkdnsrr($domain,"MX") || checkdnsrr($domain,"A")) ){
+            $isValid = False;
+         }
        }
-       */
+
     }
     return $isValid;
 	}
