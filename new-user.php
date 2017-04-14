@@ -6,7 +6,7 @@
   $new_user_LoginAfterInsert = True;
   $new_user_checkRegisters = False;
   $new_user_level = 1;
-  $new_user_is_verified = 1;
+  $new_user_is_verified = 0;
 
   /* If form is submited, attempt to insert user, if not, just retrieve Form
      if there is an error, the message is shown inside the Form */

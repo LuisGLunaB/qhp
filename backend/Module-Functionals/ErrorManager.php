@@ -50,7 +50,7 @@ class ErrorManager{
 		echo $errorMessage;
 	}
 	public static function alertErrorMessage($errorMessage){
-		echo printf("<script>alert('%s');</script>", $errorMessage);
+		printf("<script>alert('%s');</script>", $errorMessage);
 	}
 
 	public function getStatus(){

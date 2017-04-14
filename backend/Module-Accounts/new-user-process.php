@@ -27,6 +27,22 @@ if( key_exists("form",$_POST) ){ if( $_POST["form"] == "new-user"){
                             // New User has been created
                             $new_user_status = True;
                             $new_user_id = $NewUser->lastId;
+
+                            if( $new_user_is_verified){
+                                //Welcome Email (Delete Option)
+                            }else{
+                                //Verification Email
+                                $verification_key = CreateVerificationKey($new_user_id);
+                                require_once( ROOT . "/backend/Loaders/LOADMODULE_Email.php" );
+                                SendVerificationEmail(
+                                  NOREPLY_EMAIL, //From
+                                  $NewUserData["email"], //To
+                                  "Verifica tu cuenta de ". BUSINESS_NAME, //Title
+                                  "", //Name
+                                  DOMAIN . "/verify_user.php?verification_key=$verification_key" //URL
+                                );
+                            }
+
                             if( (!is_null($new_user_redirect)) and $new_user_redirect != "" ){
                               header("Location: $new_user_redirect");}
                         }else{

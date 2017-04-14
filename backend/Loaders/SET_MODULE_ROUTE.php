@@ -5,6 +5,7 @@ if( ! defined("MODULE_ROUTE") ){
   if( ! defined("CONFIGURATIONS_ROUTE") ){
     define("CONFIGURATIONS_ROUTE", MODULE_ROUTE . "Configurations/" );
   }
+  require_once( CONFIGURATIONS_ROUTE . "macrovariables.php" );
   require_once( CONFIGURATIONS_ROUTE . "debugging.php" );
   require_once( MODULE_ROUTE . "Loaders/LOADMODULE_Functionals.php" );
 }

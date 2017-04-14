@@ -63,7 +63,11 @@ class UserObject extends SQLBasicSelector{
       if( $this->credentialsAreValid($credentials) ){
         $success = $this->tryToLogin($credentials);
       }else{
-        $this->ErrorManager->handleError( $this->message() );
+          if( $this->status() ){
+            $this->ErrorManager->handleError( "Usuario o contraseña Incorrectos." );
+          }else{
+            $this->ErrorManager->handleError( $this->message() );
+          }
       }
     }
 
@@ -110,6 +114,15 @@ class UserObject extends SQLBasicSelector{
   }
 
   # Functionals
+  public function assertLevel($required_level=1, $redirect_url=NULL ){
+    if( (!$this->isLogged()) or ($this->level < $required_level) ){
+      $this->Logout($redirect_url);
+    }
+  }
+  public static function FullLoginWithCookie(){
+    $User = new UserObject();
+    return $User->LoginWithCookie();
+  }
   public static function FullLoginWithCookieLevel($required_level=1, $redirect_url=NULL){
     $User = new UserObject();
     $User->LoginWithCookie();
@@ -145,11 +158,7 @@ class UserObject extends SQLBasicSelector{
   public function isLogged(){
     return $this->is_logged;
   }
-  public function assertLevel($required_level=1, $redirect_url=NULL ){
-    if( (!$this->isLogged()) or ($this->level < $required_level) ){
-      $this->Logout($redirect_url);
-    }
-  }
+
 
   # Data retrieving methods
   protected function pullUserData($credentials){

@@ -196,7 +196,7 @@ function SendVerificationEmail($From,$To,$Title,$NAME,$VERIFICATION_URL){
 	$success = SendEmailWithTemplate(
 		$From, $To ,$Title,
 		array("NAME" => $NAME,"VERIFICATION_URL" => $VERIFICATION_URL),
-		MODULE_ROUTE_Email . "verification_template.html"
+		MODULE_ROUTE_Email . "verification_template.php"
 	);
 
 	if( ! $success ) {

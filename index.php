@@ -11,11 +11,7 @@ if( $SQLConnection->status() ){
 }
 
 
-// echo "Email: " . SendVerificationEmail("contacto@mkti.mx", "luis.g.luna18@gmail.com", "Verifica tu cuenta", "Luis", "http://mkti.mx/" );
-// echo "Verificar: " . VerifyUser("hola-3");
-// $key = CreateVerificationKey(1);
-// echo "Key: " . $key;
-// echo "Verificar: " . VerifyUser($key);
+echo file_get_contents( ROOT . "/backend/Module-Email/verification_template.php");
 
 ?>
 
@@ -27,5 +23,6 @@ if( $SQLConnection->status() ){
   </head>
   <body>
     <a href="new-user.php">New User</a>
+    <a href="login.php">Login</a>
   </body>
 </html>
