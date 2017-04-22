@@ -2,10 +2,9 @@
 $login_user_status = False;
 $login_user_message = "";
 
-
 if( key_exists("form",$_POST) ){ if( $_POST["form"] == "login"){
     ## Login Form was submited ##
-    sleep(0.1); // Sleeping eases Form submission atacks
+    sleep(4); // Sleeping eases Form submission atacks
     require_once( ROOT . "/backend/Loaders/LOADMODULE_SQL.php" );
     /* Enviroment: $SQLConnection, $con */
     if( $SQLConnection->status() ){

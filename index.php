@@ -4,17 +4,15 @@ include_once( ROOT . "/backend/Loaders/LOADMODULE_ALL.php");
 /* Eviroment: $SQLConnection, $con */
 
 if( $SQLConnection->status() ){
-  $User = UserObject::FullLoginWithCookieLevel(1,NULL);
+  $User = UserObject::FullLoginWithCookieLevel($required_level=1,$redirect_url=NULL);
 	print_r($User->UserData);
 
-  $prueba = new SQLBasicTableManager("users");
-  // print_r( $prueba->CALL_ASSOC("users_verify", "holo-3" ))  ;
+  $SQL = new SQLObject();
+  DISPLAY::asTable(  $SQL->QUERY("SELECT email AS 'correo_electronico' FROM users;")  );
+
 }else{
 	echo $SQLConnection->message();
 }
-
-
-// echo file_get_contents( ROOT . "/backend/Module-Email/verification_template.php");
 
 ?>
 

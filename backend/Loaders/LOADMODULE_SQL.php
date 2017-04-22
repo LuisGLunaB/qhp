@@ -6,6 +6,7 @@ if ( ! defined("MODULE_ROUTE_SQL") ){
 }
 
 require_once( MODULE_ROUTE_SQL . "SQLConnector.php");
+require_once( MODULE_ROUTE_SQL . "SQLObject.php");
 require_once( MODULE_ROUTE_SQL . "SQLBasicTableManager.php");
 require_once( MODULE_ROUTE_SQL . "SQLBasicSelector.php");
 require_once( MODULE_ROUTE_SQL . "SQLWhereObject.php");
