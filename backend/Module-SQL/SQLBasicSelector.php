@@ -196,6 +196,7 @@ class SQLBasicSelector extends SQLBasicTableManager{
     $this->recordStatistics("STOP");
 		return $this->data;
   }
+
   public function getQuery(){
     if( !$this->isFreeMode ){
       $this->COMPLETE_query =

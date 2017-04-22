@@ -297,6 +297,40 @@ class SQLBasicTableManager{
     return ( self::is_table($array) ) ? $array : [$array];
   }
 
+  # CALL methods
+  public function CALL($ProcedureOrFunctionName, $ArgumentsArray ){
+    if( self::isSafeSQLString($ProcedureOrFunctionName) ){
+        $Arguments = [];
+        $binds = array();
+        $c = 0;
+        $ArgumentsArray = self::inputAsArray($ArgumentsArray);
+        foreach($ArgumentsArray as $SingleArgument){
+          $Arguments[] = ":arg$c";
+          $binds[":arg$c"] = $SingleArgument;
+          $c++;
+        }
+
+        $Arguments = implode( ", ", $Arguments );
+        $query = "CALL $ProcedureOrFunctionName( $Arguments );";
+        $this->executeFetchTable( $query, $binds );
+        return $this->fetchTable();
+    }else{
+        $response[0]["OUT"] = NULL;
+        return $response;
+    }
+  }
+  public function CALL_ASSOC($ProcedureOrFunctionName, $ArgumentsArray){
+    $response = $this->CALL($ProcedureOrFunctionName, $ArgumentsArray);
+    return $response[0];
+  }
+  public function CALL_SINGLE($ProcedureOrFunctionName, $ArgumentsArray){
+    $response = $this->CALL($ProcedureOrFunctionName, $ArgumentsArray);
+    $response = $response[0];
+    $keys = array_keys($response);
+    $firstkey = $keys[0];
+    return $response[$firstkey];
+  }
+
   # Query execution Methods
   public function executeQuery($query, $binds=[] ){
     try{
@@ -342,9 +376,9 @@ class SQLBasicTableManager{
         $QueryFields = ($row==0) ? array_keys($QueryRow) : $QueryFields;
         foreach($QueryFields as $field){
           $data[$row][$field] = $QueryRow[$field];
-        } //foreach
+        } //foreach fields
         $row++;
-      } //while fetching
+      } //while foreach row
       $this->Query->closeCursor();
     } //if status
     return $data;

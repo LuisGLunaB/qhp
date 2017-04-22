@@ -29,7 +29,7 @@ if( key_exists("form",$_POST) ){ if( $_POST["form"] == "new-user"){
                             $new_user_id = $NewUser->lastId;
 
                             if( $new_user_is_verified){
-                                //Welcome Email (Delete Option)
+                                //Welcome Email (Delete Account Option)
                             }else{
                                 //Verification Email
                                 $verification_key = CreateVerificationKey($new_user_id);

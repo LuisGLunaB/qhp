@@ -6,12 +6,15 @@ include_once( ROOT . "/backend/Loaders/LOADMODULE_ALL.php");
 if( $SQLConnection->status() ){
   $User = UserObject::FullLoginWithCookieLevel(1,NULL);
 	print_r($User->UserData);
+
+  $prueba = new SQLBasicTableManager("users");
+  // print_r( $prueba->CALL_ASSOC("users_verify", "holo-3" ))  ;
 }else{
 	echo $SQLConnection->message();
 }
 
 
-echo file_get_contents( ROOT . "/backend/Module-Email/verification_template.php");
+// echo file_get_contents( ROOT . "/backend/Module-Email/verification_template.php");
 
 ?>
 
