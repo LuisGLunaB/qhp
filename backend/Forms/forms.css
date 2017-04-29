@@ -1,0 +1,29 @@
+form input, form label{
+  display: block;
+  clear: both;
+}
+form label{
+  font-weight: 700;
+  font-size: 13px;
+}
+form input, form select{
+  border-radius: 3px;
+  border: 1px solid #cccccc;
+  font-size: 15px;
+  padding: 3px;
+  margin-bottom: 8px;
+}
+form .button{
+  padding: 5px;
+  padding-left: 9px;
+  padding-right: 9px;
+}
+
+@media screen and (max-width:992px) {
+}
+
+@media screen and (max-width:600px) {
+  form input, form select{
+    width: 97%;
+  }
+}

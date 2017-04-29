@@ -5,3 +5,5 @@
   define("WEBMASTER_EMAIL", "contacto@mkti.mx");
   define("NOTIFICATIONS_EMAIL", "contacto@mkti.mx");
   define("NOREPLY_EMAIL", "contacto@mkti.mx");
+
+  define("HTTPS", "http");

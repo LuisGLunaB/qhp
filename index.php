@@ -8,7 +8,7 @@ if( $SQLConnection->status() ){
 	print_r($User->UserData);
 
   $SQL = new SQLObject();
-  DISPLAY::asTable(  $SQL->QUERY("SELECT email AS 'correo_electronico' FROM users;")  );
+  DISPLAY::asTable(  $SQL->QUERY("SELECT user_id, email AS 'correo_electronico' FROM users;")  );
 
 }else{
 	echo $SQLConnection->message();

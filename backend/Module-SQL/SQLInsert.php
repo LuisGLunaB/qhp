@@ -54,7 +54,7 @@ class SQLInsert extends SQLBasicTableManager{
       $this->maskedFields : self::maskArray($fields,$this->maskedFields);
 
     // Don't include primary key on the update
-    self::unset_byvalue($this->getTableId(), $fields);
+    // self::unset_byvalue($this->getTableId(), $fields);
 
     // Loop fields to be updated and build query
     $fieldsArray = [];

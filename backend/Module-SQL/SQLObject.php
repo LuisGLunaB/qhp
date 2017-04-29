@@ -1,4 +1,5 @@
 <?php
+
 class SQLObject{
   protected $con = NULL; #SQLConnector->Connection
   protected $Query = NULL;
@@ -192,7 +193,7 @@ class SQLObject{
     return $response[$firstkey];
   }
 
-  public function QUERY( $query, $fetch=False, $binds=[] ){
+  public function QUERY( $query, $binds=[], $fetch=False ){
     $this->executeFetchTable($query,$binds);
     $fetch = ( substr($query,0,6) == "SELECT" ) ? True : $fetch;
     return ($fetch) ? $this->fetchTable() : NULL;

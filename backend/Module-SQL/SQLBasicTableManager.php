@@ -19,6 +19,7 @@ class SQLBasicTableManager extends SQLObject{
   }
 
   # Getters
+
   public function getTableNames(){return $this->DatabaseTablesNames;}
   public function getTableName(){return $this->TableName;}
   public function getFields(){return $this->TableFields;}
