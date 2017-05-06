@@ -1,0 +1,49 @@
+#ui-header{
+  color: black;
+  width: 100%;
+  font-weight: 400;
+  height: 65px;
+  display: inline-block;
+  background-color: white;
+  margin: 0px !important;
+  padding-top: 0px;
+  padding-bottom: 0px;
+  padding-left: 10px;
+  padding-right: 10px;
+  border-bottom: 3px double #a9a9f7;
+}
+.ui-header-title *{
+  font-size: 23px;
+  margin: 0px;
+  padding: 0px;
+  font-weight: 500;
+}
+.ui-header-breadcrumbs{
+  margin-top: 2px;
+  color: #039be5 !important;
+  font-weight: 300;
+  font-size: 16px;
+}
+.ui-header-breadcrumbs a:hover{
+  text-decoration: underline;
+}
+.ui-header-breadcrumbs span{
+  font-weight: 400;
+  margin-left: 1px;
+  margin-right: 1px;
+}
+.ui-header-breadcrumbs a:last-of-type{
+  font-weight: 400;
+}
+
+.ui-main-buttons{
+  margin-top: 6px;
+}
+.ui-main-buttons .btn-floating{
+  width: 46px;
+  height: 46px;
+}
+
+.ui-main-buttons .btn-floating i{
+  line-height: 46px;
+}

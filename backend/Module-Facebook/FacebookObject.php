@@ -1,51 +1,43 @@
 <?php
 $fb_app_secret = 'c478fbfb19e9f22f688b5db5144086c7';
 $fb_app_id = '632416283438924';
-
 include_once( ROOT . "/backend/Loaders/SET_MODULE_ROUTE.php");
-class FacebookObject{
+
+$fb_connection = FacebookConnection::Set($fb_app_secret,$fb_app_id);
+$Yo = "EAAIZCLePsr0wBABDGkkVCZAgmT5MBsOz9BJ1ksTmb3u4MUmW4idjFxZChYTF2q4wdLZAdoSuEb1YYpqNYZCZC3yBRRVr6KBUhbrV3d7uHH5WZAUowfZAJiTpljnxPCTHd3DOZAN9MZANeKaAjKTddoXgy1IjIhV89RKXAZD";
+$MKTi = "EAAIZCLePsr0wBAKgV8yRXlG26FZBalOrKpOfJOfLHgxZA7qmMiA2BB2bUlERNPIK8Ha1hWBbuMQUdphXeHmhp30TqDZCz6yrxa55AufoBZCx9DQV3RHLRbbhewYleikCIuaDhQlRVAZADrmch9Ur6A1QHShHF7HsTnZAJbopHXmlAZDZD";
+
+class FacebookConnection{
   protected $app_secret = NULL;
   protected $app_id = NULL;
   protected $version = "v2.9";
-
   public $con = NULL;
-  protected $Query = NULL;
-  public $Token = NULL;
-  public $PageToken = NULL;
-
-  protected $BasicUserPermissions = ['public_profile','user_friends','email'];
-  protected $MidUserPermissions = ['public_profile','email','user_likes',];
-  protected $UserPermissions = ['public_profile','email','pages_show_list', 'read_page_mailboxes',
-  'read_insights','manage_pages','publish_pages','pages_messaging'];
-
-  public $reponse = NULL;
-  public $data = array();
-  public $accounts = NULL;
-
-  protected $ErrorManager;
 
   public function __construct($app_secret=NULL,$app_id=NULL){
-    $this->loadSDK();
     $this->ErrorManager = new ErrorManager();
+    $this->loadSDK();
     $this->setConnection($app_secret,$app_id);
+  }
+  public static function Set($fb_app_secret,$fb_app_id){
+    $FacebookConnectionObject1 = new FacebookConnection($fb_app_secret,$fb_app_id);
+    return $FacebookConnectionObject1->con;
   }
   protected function loadSDK(){
     if (session_status() == PHP_SESSION_NONE) {session_start();}
     define('FACEBOOK_SDK_V4_SRC_DIR', __DIR__ . '/facebook-sdk-v5/');
     require_once __DIR__ . '/facebook-sdk-v5/autoload.php';
   }
-
   # Connection methods
   public function setConnection($app_secret=NULL,$app_id=NULL){
     if( is_null($app_secret) or is_null($app_id) ){
-      list($this->app_secret,$this->app_id) = $this->setConnectionFromEnviroment();
+      list($this->app_secret,$this->app_id) = $this->getCredentialsFromEnviroment();
     }else{
       $this->app_secret = $app_secret;
       $this->app_id = $app_id;
     }
     $this->connect();
   }
-  private function setConnectionFromEnviroment(){
+  private function getCredentialsFromEnviroment(){
 		if( isset($GLOBALS["fb_app_secret"]) and isset($GLOBALS["fb_app_id"]) ){
       return [$GLOBALS["fb_app_secret"], $GLOBALS["fb_app_id"]];
 		}else{
@@ -63,7 +55,69 @@ class FacebookObject{
       $this->ErrorManager->handleError("Error when connecting to Facebook", $e );
     }
   }
+  public function status(){
+    return $this->ErrorManager->getStatus();
+  }
+  public function message(){
+    return $this->ErrorManager->getMessage();
+  }
+}
 
+class FacebookObject{
+  public $con = NULL;
+  public $Token = NULL;
+  public $Query = NULL;
+  public $LastFunction = NULL;
+
+  public $limit = 100;
+  public $since = NULL;
+  public $until = NULL;
+  public $size = NULL; // Integer
+
+  protected $BasicUserPermissions = ['public_profile','user_friends','email'];
+  protected $MidUserPermissions = ['public_profile','email','user_likes',];
+  protected $UserPermissions = ['public_profile','email','pages_show_list', 'read_page_mailboxes',
+  'read_insights','manage_pages','publish_pages','pages_messaging'];
+
+  protected $AccountsFields = ["access_token","name","id","perms",
+  "username","instagram_accounts","picture","cover"];
+
+  public $reponse = NULL;
+  public $data = array();
+  public $accounts = NULL;
+
+  protected $ErrorManager;
+
+  public function __construct($Token=NULL,$con=NULL){
+    $this->ErrorManager = new ErrorManager();
+
+    $this->SetOrSenseConnection($con);
+    $this->SetOrLoadToken($Token);
+  }
+  protected function SetOrSenseConnection($con){
+    if( is_null($con) ){
+      $this->getConnectionFromEnviroment();
+    }else{
+      $this->con = $con;
+    }
+  }
+  protected function SetOrLoadToken($Token){
+    if( ! is_null($Token) ){
+      $this->setToken($Token);
+    }else{
+      $this->loadTokenIfPossible();
+    }
+  }
+  protected function getConnectionFromEnviroment(){
+    if( isset($GLOBALS["fb_connection"]) ){
+      $this->con = $GLOBALS["fb_connection"];
+		}else{
+      $this->con = NULL;
+    }
+  }
+  public function hasConnection(){
+    return is_null($this->con);
+  }
   # Login and User methods
   public function getLoginURL($callback=NULL,$UserPermissions=NULL){
     // Set Callback
@@ -123,27 +177,45 @@ class FacebookObject{
     $this->setDefaultAccessToken();
     return $this->Token;
   }
+
+  public function loadTokenIfPossible(){
+    if( $this->isLoadTokenPossible() ){
+      $this->loadToken();
+    }
+  }
+  public function isLoadTokenPossible(){
+    return array_key_exists("fbt",$_COOKIE);
+  }
   public function hasToken(){
-    return ( !is_null($this->Token) );
+    return ( !is_null( $this->Token ) );
+  }
+  public function setToken($Token){
+    $this->Token = $Token;
+    $this->setDefaultAccessToken();
   }
   protected function setDefaultAccessToken(){
-    try{
-      $this->con->setDefaultAccessToken($this->Token);
-    }catch(Exception $e){
-      $this->ErrorManager->handleError( "Error when setting Default Facebook Token.", $e);
+    if( $this->hasToken() ){
+      try{
+        $this->con->setDefaultAccessToken( $this->Token );
+      }catch(Exception $e){
+        $this->ErrorManager->handleError( "Error when setting Default Facebook Token.", $e);
+      }
     }
   }
 
   # API basic methods
   public function me( $fields=["id","name","email"] ){
     $fields = self::commaSeparated($fields);
-    return $this->QUERY("me?fields=$fields");
+    return $this->GET("me?fields=$fields");
   }
   public function email(){
     $UserData = $this->me();
     return $UserData["email"];
   }
-  public function QUERY($Query){
+
+  public function GET($Query){
+    $this->Query = $Query;
+    $this->LastFunction = debug_backtrace()[1]['function'];
     if( $this->TryToGetResponse($Query) ){
       try{
         $this->data = $this->response->getDecodedBody();
@@ -151,6 +223,8 @@ class FacebookObject{
         $this->data = array();
         $this->ErrorManager->handleError("Error when Decoding Facebook Query Response.", $e );
       }
+    }else{
+      //Log Error with $this->message() on the Enviroment.
     }
   	return $this->data;
   }
@@ -171,23 +245,68 @@ class FacebookObject{
     }
     return $parsed;
   }
-  # API accounts methods
-  public function get_account_token($id_or_username,$level=1){
-    $search_field = ( is_string($id_or_username) ) ? "page_username" : "page_id";
-    $this->PageToken = NULL;
-    $this->accounts();
-    foreach($this->accounts as $row){
-      if( $row[$search_field] == $id_or_username ){
-        $this->PageToken = $row["page_token"];
-        break;
-      }
-    }
-    return $this->PageToken;
+
+  # Pagination methods
+  public function PaginateAndCount(){
+    $this->Paginate();
+    $this->Count();
   }
-  public function accounts( $fields=["access_token","name","id","perms","username","instagram_accounts","picture","cover"], $reload=False){
+  public function Paginate(){
+    list($this->since,$this->until) = self::Pagination($this->data);
+  }
+  public static function Pagination($data){
+    $since = NULL;$until = NULL;
+    if( array_key_exists("paging",$data) ){
+      $since = self::getSince( $data["paging"]["previous"] );
+      $until = self::getUntil( $data["paging"]["next"] );
+      $since = (int) $since;
+      $until = (int) $until;
+    }
+    return [$since, $until];
+  }
+  public static function getSince($string){
+    return self::getSinceOrUntil($string,"since");
+  }
+  public static function getUntil($string){
+    return self::getSinceOrUntil($string,"until");
+  }
+  public static function getSinceOrUntil($string,$type){
+    $exploded = explode( "$type=" ,$string);
+    $value = explode( "&" , $exploded[1] );
+    return $value[0];
+  }
+
+  # Query Size methods
+  public function Count(){
+    $this->size = self::DataSize($this->data);
+  }
+  public static function DataSize($data){
+    if( array_key_exists("data",$data) ){
+      return sizeof( $data["data"] );
+    }else{
+      return sizeof( $data );
+    }
+  }
+  public function isPageFull(){
+    $this->Count();
+    return ( $this->size == $this->limit );
+  }
+  public function isPageEmpty(){
+    $this->Count();
+    return ( ($this->size == 0) or is_null($this->size) );
+  }
+  public function isLastPage(){
+    $this->Count();
+    return ( ($this->size < $this->limit) and ($this->size > 0)  );
+  }
+
+  # API accounts methods
+  public function ACCOUNTS($reload=False,$fields=NULL){
     if( $reload or ! $this->hasAccounts() ){
+      $fields = (is_null($fields)) ? $this->AccountsFields : $fields;
       $fields = self::commaSeparated($fields);
-      $this->accounts = $this->QUERY("me/accounts?fields=$fields");
+      $this->accounts = $this->GET("me/accounts?fields=$fields");
+      //PaginateAndCount()?
       $this->accounts = $this->accounts["data"];
       $this->accounts = self::parse_accounts($this->accounts);
       if( !$this->status() ){
@@ -195,6 +314,18 @@ class FacebookObject{
       }
     }
     return $this->accounts;
+  }
+  public function get_account_token($id_or_username,$level=1){
+    $search_field = ( is_string($id_or_username) ) ? "page_username" : "page_id";
+    $PageToken = NULL;
+    $this->ACCOUNTS();
+    foreach($this->accounts as $row){
+      if( $row[$search_field] == $id_or_username ){
+        $PageToken = $row["page_token"];
+        break;
+      }
+    }
+    return $PageToken;
   }
   public static function parse_accounts($data){
     $parsed = self::parse("self::parse_accounts_row", $data);
@@ -268,4 +399,35 @@ class FacebookObject{
   public function message(){
     return $this->ErrorManager->getMessage();
   }
+}
+
+class FacebookPageManager extends FacebookObject{
+
+  public function me( $fields=["id","name"] ){
+    return parent::me( $fields );
+  }
+  public function setPage($id_or_username){
+    $PageToken = $this->get_account_token($id_or_username);
+    $this->setToken($PageToken);
+  }
+
+}
+
+class FacebookPageInbox extends FacebookPageManager{
+  public $limit = 5;
+  public $conversation_fields = ["id","link","updated_time","participants",
+      "message_count","unread_count","snippet","can_reply","is_subscribed"];
+
+  public function INBOX($fields=NULL){
+    return $this->CONVERSATIONS($fields);
+  }
+
+  public function CONVERSATIONS($fields=NULL){
+    $fields = (is_null($fields)) ? $this->conversation_fields : $fields;
+    $fields = self::commaSeparated($fields);
+    $this->GET("me/conversations?fields=$fields&limit=$this->limit");
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+
 }

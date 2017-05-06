@@ -1,0 +1,45 @@
+#ui-sidebar{
+  color: white !important;
+  font-weight: 700;
+  position: relative;
+  display: inline-block;
+  clear: none;
+  /*width: 55px;*/
+  width: 13%;
+  height: 100%;
+  background-color: black;
+  z-index: 100;
+}
+.ui-sidebar-item{
+  width: 100%;
+  text-align: left;
+  padding-bottom: 3px;
+  border-bottom: 1px solid rgb(30,30,30);
+}
+#ui-sidebar .waves-effect .waves-ripple {
+  background-color: rgba(120, 120, 120, 0.65);
+}
+.ui-sidebar-item:hover{
+  background-color: rgb(50,50,50);
+}
+#ui-sidebar a{
+  margin-top: 3px;
+  color: inherit;
+  width: 100%;
+  display: inline-block;
+}
+#ui-sidebar .ui-icon{
+  width: 32px;
+  height: auto;
+  padding: 3px;
+  padding-left: 7px;
+  display: inline-block;
+  vertical-align:bottom;
+}
+#ui-sidebar .ui-sidetext{
+  font-size: 16px;
+  display: inline-block;
+  padding-left: 5px;
+  padding-right: 20px;
+  /*display: none;*/
+}

@@ -3,6 +3,8 @@
   $buttonName = ($insert1_operation=="insert") ? "Agregar" : "Guardar";
   $_DAT = ($insert1_operation=="insert") ? "" : $_REQ;
 ?>
+
+<link rel="stylesheet" href="<?php echo ROOT; ?>/backend/Forms/forms.css">
 <form class="" action="<?php echo $insert1_action; ?>" method="<?php echo $insert1_request_type; ?>">
   <?php
     // echo SQLNavigate::InputSelectValueLabels("productos","id","marca",1001);

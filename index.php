@@ -7,7 +7,7 @@ if( $SQLConnection->status() ){
   $User = UserObject::FullLoginWithCookieLevel($required_level=1,$redirect_url=NULL);
 	print_r($User->UserData);
 
-  $SQL = new SQLObject();
+  $SQL = new SQLObject(); 
   DISPLAY::asTable(  $SQL->QUERY("SELECT user_id, email AS 'correo_electronico' FROM users;")  );
 
 }else{
@@ -20,7 +20,7 @@ if( $SQLConnection->status() ){
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Backend Index</title>
+    <title>Ya...veamos</title>
   </head>
   <body>
     <a href="new-user.php">New User</a>

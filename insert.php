@@ -22,7 +22,7 @@ include_once( ROOT . "/backend/Module-SQL/CRUD-Create.php");
   <head>
     <meta charset="utf-8">
     <title>Insert</title>
-    <link rel="stylesheet" href="./backend/Forms/forms.css">
+    
   </head>
   <body>
     <?php

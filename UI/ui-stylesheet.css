@@ -1,0 +1,23 @@
+html, body{
+  height: 100%;
+  position: relative;
+}
+
+#ui-main{
+  color: white !important;
+  font-weight: 700;
+  position: absolute;
+  display: inline-block;
+  clear: none;
+  width: 87%;
+  height: 100%;
+  background-color: #f5f5f5;
+
+
+}
+
+/*#ui-main{
+  background-image: url("../bg.jpg");
+  background-position: top center;
+  background-size: cover;
+}*/
