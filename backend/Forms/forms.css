@@ -1,22 +1,35 @@
-form input, form label{
-  display: block;
-  clear: both;
+form{
+  padding: 9px;
+}
+
+form input, form label, form select, form .button{
+  display: block !important;
+  clear: both !important;
+  width: 90% !important;
+  height: auto !important;
 }
 form label{
   font-weight: 700;
   font-size: 13px;
+  color: black !important;
 }
 form input, form select{
-  border-radius: 3px;
-  border: 1px solid #cccccc;
-  font-size: 15px;
-  padding: 3px;
-  margin-bottom: 8px;
+  border-radius: 3px !important;
+  /*border: 1px solid #cccccc !important;*/
+  font-size: 16px !important;
+  padding: 4px !important;
+  margin-bottom: 8px !important;
+  font-weight: 400 !important;
 }
 form .button{
-  padding: 5px;
-  padding-left: 9px;
-  padding-right: 9px;
+  padding: 5px !important;
+  padding-left: 9px !important;
+  padding-right: 9px !important;
+}
+
+form textarea:focus, form input:focus{
+  border-bottom: 1px solid #039be5 !important;
+  box-shadow: 0 1px 0 0 #039be5 !important;
 }
 
 @media screen and (max-width:992px) {
@@ -24,6 +37,6 @@ form .button{
 
 @media screen and (max-width:600px) {
   form input, form select{
-    width: 97%;
+    width: 97% !important;
   }
 }

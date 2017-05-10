@@ -119,6 +119,31 @@ class SQLObject{
   		return False;
   	}
   }
+  public static function string_to_url($string){
+    $validCharacters =
+    ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r",
+    "s","t","u","v","w","x","y","z","-",0,1,2,3,4,5,6,7,8,9,
+    "0","1","2","3","4","5","6","7","8","9"];
+    $replaceWithDashCharacters =
+    [" ","/","_"];
+
+    $characters = str_split( strtolower($string) );
+    $return_string = "";
+
+    foreach( $characters as $char){
+      if( in_array($char,$validCharacters,True) ){
+        $return_string .= $char;
+      }else{
+        if( in_array($char,$replaceWithDashCharacters) ){
+          $return_string .= "-";
+        }
+      }
+    }
+    return $return_string;
+  }
+  public static function is_url_safe($string){
+    return ( $string==self::string_to_url($string) );
+  }
 
   # Static Type-validating Methods
   public static function is_assoc($array){
@@ -195,8 +220,12 @@ class SQLObject{
 
   public function QUERY( $query, $binds=[], $fetch=False ){
     $this->executeFetchTable($query,$binds);
-    $fetch = ( substr($query,0,6) == "SELECT" ) ? True : $fetch;
-    return ($fetch) ? $this->fetchTable() : NULL;
+    if( $this->status() ){
+      $fetch = ( substr($query,0,6) == "SELECT" ) ? True : $fetch;
+      return ($fetch) ? $this->tryFetchTable() : NULL;
+    }else{
+      return NULLS;
+    }
   }
   # Query execution Methods
   public function executeQuery($query, $binds=[] ){
@@ -205,7 +234,7 @@ class SQLObject{
       $this->Query->execute( $binds );
       //Catch Warnings: "Warning: PDOStatement::execute(): "
     }catch(Exception $e){
-      $this->ErrorManager->handleError("Error in executeQuery $this->TableName.", $e );
+      $this->ErrorManager->handleError("Error in executeQuery $this->Query.", $e );
     }
   }
   public function executeQueryWithBinds($query,$binds){
@@ -222,7 +251,7 @@ class SQLObject{
       $this->Query->execute( $binds );
       //Catch Warnings: "Warning: PDOStatement::execute(): "
     }catch(Exception $e){
-      $this->ErrorManager->handleError("Error in executeQuery $this->TableName.", $e );
+      $this->ErrorManager->handleError("Error in executeQuery $this->Query.", $e );
     }
   }
   public function executeFetchId( $query, $binds=[] ){
@@ -232,12 +261,31 @@ class SQLObject{
       $this->lastId = $this->con['handler']->lastInsertId();
     }catch (Exception $e){
       $this->lastId = NULL;
-      $this->ErrorManager->handleError("Error in INSERT $this->TableName.", $e );
+      $this->ErrorManager->handleError("Error in INSERT $this->Query.", $e );
 		}
     return $this->status();
   }
 
+  public function lastInsertId(){
+    return $this->con['handler']->lastInsertId();
+  }
+
+  public function VariableOrErrorvalue($Variable,$Errorvalue=NULL){
+    if( $this->status() ){
+      return $Variable;
+    }else{
+      return $Errorvalue;
+    }
+  }
   # Fetching Methods
+  protected function tryFetchTable(){
+    try{
+      return $this->fetchTable();
+    }catch(Exception $e){
+      $this->ErrorManager->handleError("Error when fetching Query $this->Query.", $e );
+      return NULL;
+    }
+  }
   protected function fetchTable(){
     $data = array();
     if( $this->status() ){

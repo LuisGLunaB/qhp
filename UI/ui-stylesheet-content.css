@@ -1,0 +1,60 @@
+.ui-content{
+  color: black;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 3px 3px 6px 3px rgba(0,0,0,0.17);
+  /*border: 1px solid rgb(200,200,200);*/
+}
+.ui-content.small{
+  width: 28%;
+  margin-top:4%;
+}
+.ui-content.medium{
+  width: 60%;
+  margin-top:4%;
+}
+.ui-tabs{
+  width: 100%;
+  /*top: -25px;*/
+  position: relative;
+  border-bottom: 3px double #1e88e5;
+}
+.ui-tab{
+  font-weight: 400;
+  width: 19%;
+  border-radius: 8px 8px 0 0;
+  background-color: white;
+  color: #232323;
+  display: inline-block;
+  font-size: 16px;
+  padding: 2px;
+  margin: 0px;
+  text-align: center;
+  border: 1px solid #bfbfbf;
+  border-bottom: 0px;
+  background: rgb(255,255,255);
+  background: -moz-linear-gradient(top, rgba(255,255,255,1) 52%, rgba(238,238,238,1) 89%);
+  background: -webkit-linear-gradient(top, rgba(255,255,255,1) 52%,rgba(238,238,238,1) 89%);
+  background: linear-gradient(to bottom, rgba(255,255,255,1) 52%,rgba(238,238,238,1) 89%);
+  filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#eeeeee',GradientType=0 );
+}
+.ui-tab:hover{
+  margin-top: -6px;
+  padding-top: 8px;
+}
+.ui-tab.selected{
+  background: rgb(0,0,0);
+  color: white;
+}
+.ui-tab.good{
+  background: rgb(64, 204, 94);
+  color: white;
+}
+.ui-tab.bad{
+  background: rgb(204, 64, 64);
+  color: white;
+}
+.ui-tab.blocked{
+  background: rgb(220, 220, 220);
+  color: #a5a5a5;
+}

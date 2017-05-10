@@ -86,3 +86,7 @@ class ErrorManager{
 	}
 
 }
+
+function alert($string){
+	printf("<script>alert('%s');</script>", $string);
+}
