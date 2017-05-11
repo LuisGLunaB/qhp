@@ -18,7 +18,7 @@ class ErrorManager{
 	}
 
 	private function matchGlobalDebuggingStatus(){
-		if( isset($GLOBALS["debugging"]) ){
+		if( array_key_exists( "debugging", $GLOBALS) ){
 			$this->debugging = $GLOBALS["debugging"];
 		}
 	}
@@ -36,7 +36,7 @@ class ErrorManager{
 		$this->State = json_encode( $_REQUEST );
 		// $this->$StateJSON = json_encode( $_REQUEST, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE );
 
-		if( $this->weAreDebugging() ){ self::alertErrorMessage($errorMessage); }
+		alert_if_debugging( $errorMessage );
 		$this->manageExecutionEnd( $exitExecution );
 	}
 
@@ -45,9 +45,8 @@ class ErrorManager{
 		if( is_null($exitExecution) ){
 			$exitExecution = $this->exitExecution;
 		}
-		if( $exitExecution ){
-			exit;
-		}
+		if( $exitExecution ){ exit; }
+
 		return $exitExecution;
 	}
 
@@ -85,6 +84,15 @@ class ErrorManager{
 		return $this->errorMessage;
 	}
 
+}
+
+function alert_if_debugging($string){
+	if( array_key_exists("debugging", $GLOBALS) ){
+		$debugging = $_GLOBALS["debugging"];
+	}else{
+		$debugging = False;
+	}
+	if($debugging){ alert($string); }
 }
 
 function alert($string){

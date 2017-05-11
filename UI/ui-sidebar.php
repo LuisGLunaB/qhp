@@ -1,6 +1,4 @@
 
-<link href="<?php echo $ROOT;?>/UI/ui-stylesheet-sidebar.css" rel="stylesheet" type="text/css" />
-
 <div id="ui-sidebar">
 
   <div class="ui-sidebar-item waves-effect">

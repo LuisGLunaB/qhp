@@ -72,6 +72,22 @@ class DISPLAY{
   }
 }
 
+function showFormError($form_error=NULL){
+  if(is_null($form_error)){
+    if( array_key_exists( "form_error", $GLOBALS) ){
+      echo '<div class="form-error">'.$GLOBALS["form_error"].'</div>';
+    }else{
+      // NULL was given, no form has been called.
+    }
+  }else{
+    if($form_error != ""){
+      echo '<div class="form-error">'.$form_error.'</div>';
+    }else{
+      // There is was no error with the form.
+    }
+  }
+}
+
 function array_sort($array, $on, $order=SORT_ASC){
 
     $new_array = array();
@@ -105,4 +121,28 @@ function array_sort($array, $on, $order=SORT_ASC){
     }
 
     return $new_array;
+}
+function was_form_submitted($form_name,$request_type="POST"){
+  $REQ = get_request_type_data($request_type);
+  if( array_key_exists("form",$REQ) ){
+    $submitted_form = $REQ["form"];
+    if( $submitted_form == $form_name ){
+      return True;
+    }else{
+      return False;
+    }
+  }else{
+    return False;
+  }
+}
+function get_request_type_data($request_type="POST"){
+  switch ($request_type) {
+      case "POST":
+          $REQ = $_POST;break;
+      case "GET":
+          $REQ = $_GET;break;
+      default:
+          $REQ = $_POST;
+  }
+  return $REQ;
 }
