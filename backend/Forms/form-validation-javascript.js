@@ -1,4 +1,3 @@
-<script>
   function isTextBlank( inputName ){
     Input = getValue(inputName);
     return (
@@ -43,5 +42,3 @@
       alert("error");
     }
   }
-  
-</script>

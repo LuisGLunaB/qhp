@@ -1,19 +1,17 @@
-<link href="<?php echo $ROOT;?>/backend/Forms/forms.css" rel="stylesheet" type="text/css" />
-
 <form id="create-store-form" action="" method="post">
-  <label for="store_name">Nombre de la tienda</label>
-  <input type="text" name="store_name" id="store_name" value="">
+<input type="hidden" name="form" value="create-store-form">
 
-  <div class="ui-form-buttons">
-    <input type="hidden" name="form" value="create-store-form">
+    <label for="store_name"><?php pTRANSLATE("nombre_de_la_tienda"); ?></label>
+    <input type="text" name="store_name" id="store_name" value="">
 
-    <?php showFormError(); ?>
+    <div class="form-error"><?php showFormError(); ?></div>
 
-    <a href="javascript:{}" onclick="$('#create-store-form').submit();"
-      data-position="bottom" data-delay="1" data-tooltip="Guardar"
-      class="btn-floating btn-small tooltipped waves-effect waves-light blue darken-1">
-      <i class="material-icons">add</i>
-    </a>
+    <div class="ui-form-buttons">
+        <a href="javascript:{}" onclick="$('#create-store-form').submit();"
+          data-position="bottom" data-delay="1" data-tooltip="<?php pTRANSLATE("guardar"); ?>"
+          class="btn-floating btn-small tooltipped waves-effect waves-light blue darken-1">
+          <i class="material-icons">add</i>
+        </a>
+    </div>
 
-  </div>
 </form>

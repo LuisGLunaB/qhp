@@ -9,6 +9,8 @@ define( "ECOMMERCE_ROUTE_processes", (ECOMMERCE_ROUTE."processes/") );
 include_once( ROOT . "/backend/Loaders/LOADMODULE_ALL.php");
 include_once( ECOMMERCE_ROUTE . "ECOMMERCE.php"); //Object
 
+include_once( ROOT . "/UI/TRANSLATIONS.php");
+
 if( $SQLConnection->status() ){
   $ECOM = new ECOMMERCE();
 }else{

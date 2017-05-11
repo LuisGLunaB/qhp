@@ -18,13 +18,22 @@ if( $SQLConnection->status() ){
 	$error_message = $SQLConnection->message();
 }
 
-// $SectionTitle; $BreadCrumbs; $MenuButtons;
-// $Languages;
+# UI Navegation:
+$SectionTitle = "agregar_tienda";
+$BreadCrumbs = [
+  ["#","mi_tienda"],
+  ["#","agregar_tienda"]
+];
+$MenuButtons = [
+  ["#","search"],
+  ["#","add"]
+];
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
-<html lang="es-MX" xml:lang="es" xmlns="http://www.w3.org/1999/xhtml">
+<html lang="<?php pTRANSLATE("lang"); ?>" xml:lang="<?php pTRANSLATE("lang"); ?>"
+xmlns="http://www.w3.org/1999/xhtml">
 <head>
 	<title>E-Commerce</title>
 	<?php include_once( ECOMMERCE_ROUTE . "head-configurations.php" ); ?>
@@ -36,32 +45,7 @@ if( $SQLConnection->status() ){
 <body onresize="" onload="">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
-    <div id="ui-header">
-
-      <div class="left-align" style="display: inline-block; float: left;">
-
-        <div class="ui-header-breadcrumbs left-align">
-          <a href="#">Mi tienda</a> <span>></span>
-          <a href="#">Categorías</a>
-        </div>
-
-        <div class="ui-header-title left-align"><h1>Agregar Categoría</h1></div>
-
-      </div>
-
-      <div class="ui-main-buttons right-align" style="display: inline-block; float: right;">
-        <a data-position="bottom" data-delay="0" data-tooltip="Buscar"
-          class="btn-floating btn-medium tooltipped waves-effect waves-light blue darken-1">
-          <i class="material-icons">search</i>
-        </a>
-        <a data-position="bottom" data-delay="0" data-tooltip="Guardar"
-          class="btn-floating btn-medium tooltipped waves-effect waves-light blue darken-1">
-          <i class="material-icons">add</i>
-        </a>
-      </div>
-
-    </div>
-
+    <?php include_once("$ROOT/UI/ui-header.php"); ?>
       <div class="ui-content small row left-align" >
         <!-- <div class="ui-tabs">
           <a href="#" class="ui-tab selected">Información</a>

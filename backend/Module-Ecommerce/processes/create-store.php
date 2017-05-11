@@ -16,7 +16,10 @@ if( $store_name != "" ){
     $form_error = $ECOM->message();
   }
 }else{
-  $form_error = "* Falta el nombre de la tienda.";
+  $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la tienda.";
+  $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
+
+  $form_error = TRANSLATE("falta_el_nombre_de_la_tienda");
 }
 /* Eviroment: $form_data, $form_status, $form_error */
 
