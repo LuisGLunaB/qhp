@@ -1,5 +1,5 @@
 <?php
-define("LANGUAGE","ES");
+define("LANGUAGE","EN");
 
 $TRANSLATIONS["lang"]["ES"] = "es";
 $TRANSLATIONS["lang"]["EN"] = "en";
@@ -37,6 +37,9 @@ $TRANSLATIONS["cateogoria"]["EN"] = "Category";
 
 $TRANSLATIONS["categorias"]["ES"] = "Categorías";
 $TRANSLATIONS["categorias"]["EN"] = "Categories";
+
+$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la tienda.";
+$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
 
 function TRANSLATE($key){
   if( defined("LANGUAGE") ){
