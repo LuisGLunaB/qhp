@@ -17,14 +17,14 @@
 </form>
 
 <script type="text/javascript">
-  var Form_cs1 = $("#create-store-form");
-  $(".save-button", Form_cs1).click( function(){
-    clear_form_error(Form_cs1);
+  var $Form_cs1 = $("#create-store-form");
+  $(".save-button", $Form_cs1).click( function(){
+    clear_form_error($Form_cs1);
 
-    if( notEmptyFormInputValue("store_name",Form_cs1) ){
-      Form_cs1.submit();//Or API call and processing.
+    if( notEmptyFormValue("store_name",$Form_cs1) ){
+      $Form_cs1.submit();//Or API call and processing.
     }else{
-      set_form_error_TRANSLATE("falta_el_nombre_de_la_tienda",Form_cs1);
+      set_form_error_TRANSLATE("falta_el_nombre_de_la_tienda",$Form_cs1);
     }
   });
 

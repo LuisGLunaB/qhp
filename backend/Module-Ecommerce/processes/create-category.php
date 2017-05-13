@@ -7,8 +7,8 @@ $form_error = "";
 
 extract($_POST);
 
-if( notEmptyString($store_name) ){
-  $ECOM->CreateStore( $store_name );
+if( notEmptyString($category_name) ){
+  $ECOM->CreateCategory( $category_name );
   if( $ECOM->status() ){
     $form_status = True;
     $form_data = $ECOM->lastInsertId();
@@ -16,7 +16,7 @@ if( notEmptyString($store_name) ){
     $form_error = $ECOM->message();
   }
 }else{
-  $form_error = TRANSLATE("falta_el_nombre_de_la_tienda");
+  $form_error = TRANSLATE("falta_el_nombre_de_la_categoria");
 }
 
 /* Eviroment: $form_data, $form_status, $form_error */

@@ -1,5 +1,5 @@
 <?php
-define("LANGUAGE","EN");
+define("LANGUAGE","ES");
 
 $TRANSLATIONS["lang"]["ES"] = "es";
 $TRANSLATIONS["lang"]["EN"] = "en";
@@ -13,6 +13,9 @@ $TRANSLATIONS["search"]["EN"] = "Search";
 $TRANSLATIONS["guardar"]["ES"] = "Guardar";
 $TRANSLATIONS["guardar"]["EN"] = "Save";
 
+$TRANSLATIONS["agregar"]["ES"] = "Agregar";
+$TRANSLATIONS["agregar"]["EN"] = "Add";
+
 $TRANSLATIONS["buscar"]["ES"] = "Buscar";
 $TRANSLATIONS["buscar"]["EN"] = "Search";
 
@@ -21,6 +24,12 @@ $TRANSLATIONS["tienda"]["EN"] = "Store";
 
 $TRANSLATIONS["tiendas"]["ES"] = "Tiendas";
 $TRANSLATIONS["tiendas"]["EN"] = "Stores";
+
+$TRANSLATIONS["ver_todos"]["ES"] = "Ver todos";
+$TRANSLATIONS["ver_todos"]["EN"] = "See All";
+
+$TRANSLATIONS["ver_todas"]["ES"] = "Ver todas";
+$TRANSLATIONS["ver_todas"]["EN"] = "See All";
 
 $TRANSLATIONS["mi_tienda"]["ES"] = "Mi Tienda";
 $TRANSLATIONS["mi_tienda"]["EN"] = "My Store";
@@ -32,14 +41,23 @@ $TRANSLATIONS["agregar_tienda"]["ES"] = "Agregar Tienda";
 $TRANSLATIONS["agregar_tienda"]["EN"] = "Add Store";
 
 # Categorias
-$TRANSLATIONS["cateogoria"]["ES"] = "Categoría";
-$TRANSLATIONS["cateogoria"]["EN"] = "Category";
+$TRANSLATIONS["categoria"]["ES"] = "Categoría";
+$TRANSLATIONS["categoria"]["EN"] = "Category";
 
 $TRANSLATIONS["categorias"]["ES"] = "Categorías";
 $TRANSLATIONS["categorias"]["EN"] = "Categories";
 
+$TRANSLATIONS["nombre_de_la_categoria"]["ES"] = "Nombre de la Categoría";
+$TRANSLATIONS["nombre_de_la_categoria"]["EN"] = "Category name";
+
+$TRANSLATIONS["nueva_categoria"]["ES"] = "Nueva categoría";
+$TRANSLATIONS["nueva_categoria"]["EN"] = "New category";
+
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la tienda.";
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
+
+$TRANSLATIONS["falta_el_nombre_de_la_categoria"]["ES"] = "* Falta el nombre de la categoría.";
+$TRANSLATIONS["falta_el_nombre_de_la_categoria"]["EN"] = "* Category name is missing.";
 
 function TRANSLATE($key){
   if( defined("LANGUAGE") ){

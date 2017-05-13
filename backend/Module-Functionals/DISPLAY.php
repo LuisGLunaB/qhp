@@ -146,3 +146,17 @@ function get_request_type_data($request_type="POST"){
   }
   return $REQ;
 }
+
+function notEmptyString($x){
+  return ( ! isEmptyString($x) );
+
+}
+function isEmptyString($x){
+  $x = trim($x);
+  return (
+       ( is_null($x) )
+    or ( $x == "" )
+    or ( $x == "-" )
+    or ( $x == "." )
+  );
+}

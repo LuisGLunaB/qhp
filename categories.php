@@ -10,7 +10,7 @@ if( $SQLConnection->status() ){
       /* Eviroment: $form_data, $form_status, $form_error */
       include_once( ECOMMERCE_ROUTE_processes . "create-store.php" );
       if($form_status){
-        header("Location: index.php?process=create-store&lastid=$form_data&status=1");
+        // header("Location: index.php?process=create-store&status=1");
       }
     }
 
@@ -19,11 +19,15 @@ if( $SQLConnection->status() ){
 }
 
 # UI Navegation:
-$SectionTitle = "mi_tienda";
+$SectionTitle = "agregar_tienda";
 $BreadCrumbs = [
-  ["index.php","mi_tienda"]
+  ["index.php","mi_tienda"],
+  ["create_store.php","agregar_tienda"]
 ];
-$MenuButtons = [];
+$MenuButtons = [
+  ["#","search"],
+  ["#","add"]
+];
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"

@@ -1,7 +1,7 @@
 <?php
 
 // $FB = new FacebookPageManager( $MKTi );
-$FB = new FacebookPageInbox($MKTi);
+$FB = new FacebookPageManager($MKTi);
 // $FB->loadToken();
 /*
 // if( $FB->isNewTokenAvailable() ){
@@ -24,16 +24,25 @@ $FB = new FacebookPageInbox($MKTi);
     <?php
       if( $FB->hasToken() ){
 
-
         echo "Me:<br>";
         print_r( $FB->me() );
         echo "<br>";
 
-        $data = $FB->INBOX();
+        $data = $FB->CONVERSATIONS();
         echo "Inbox:<br>";
         echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
         print_r( $data );
-        // DISPLAY::asTable( $FB->ACCOUNTS() );
+
+
+
+        // while( ! $FB->isLastPage() ){
+        //   echo "<br><br>";
+        //   $data = $FB->next();
+        //   echo "Inbox:<br>";
+        //   echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
+        //   print_r( $data );
+        // }
+
       }
       echo '<br><a href="'.$FB->getLoginURL().'">Entra con Facebook</a>';
     ?>

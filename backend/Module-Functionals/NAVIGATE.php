@@ -66,6 +66,16 @@ class NAVIGATE{
     return $symbol.number_format( $x, 2, ".", ",");
   }
 
+  public static function buildKeyValueOptions($table_2d,$selected_value=NULL){
+    $options = ["<option value='-' >-</option>"];
+    foreach($table_2d as $row){
+      list($key,$value) = array_values($row);
+      $selected = ($value==$selected_value) ? "selected" : "";
+      $options[] = "<option value='$key' $selected >$value</option>";
+    }
+    return implode("",$options);
+  }
+
   public static function buildFormSelect($Table,$selected_value=NULL,$default="--"){
     $keys = array_keys($Table[0]);
     $name = "name=$keys[0]";

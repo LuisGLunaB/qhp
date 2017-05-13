@@ -2,7 +2,7 @@ form{
   padding: 9px;
 }
 
-form input, form label, form select, form .button{
+form input, form label, form select, form textarea, form .button{
   display: block !important;
   clear: both !important;
   width: 90% !important;
@@ -13,7 +13,7 @@ form label{
   font-size: 13px;
   color: black !important;
 }
-form input, form select{
+form input, form select, form textarea{
   border-radius: 3px !important;
   /*border: 1px solid #cccccc !important;*/
   font-size: 16px !important;
@@ -27,7 +27,7 @@ form .button{
   padding-right: 9px !important;
 }
 
-form textarea:focus, form input:focus{
+form textarea:focus, form input:focus,, form select:focus{
   border-bottom: 1px solid #039be5 !important;
   box-shadow: 0 1px 0 0 #039be5 !important;
 }
@@ -38,6 +38,9 @@ form .form-error{
   display: block;
   text-align: left;
   font-size: 14px;
+}
+form select{
+  border: 1px solid #cccccc;
 }
 
 @media screen and (max-width:992px) {

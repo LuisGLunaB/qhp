@@ -67,12 +67,16 @@ class FacebookObject{
   public $con = NULL;
   public $Token = NULL;
   public $Query = NULL;
+
   public $LastFunction = NULL;
 
   public $limit = 100;
+  public $size = NULL; // Integer
+
   public $since = NULL;
   public $until = NULL;
-  public $size = NULL; // Integer
+
+  public $UntilOrSince = "";
 
   protected $BasicUserPermissions = ['public_profile','user_friends','email'];
   protected $MidUserPermissions = ['public_profile','email','user_likes',];
@@ -213,10 +217,20 @@ class FacebookObject{
     return $UserData["email"];
   }
 
-  public function GET($Query){
-    $this->Query = $Query;
+  public function GET($Query=NULL,$until=NULL,$since=NULL){
+    $this->Query =  (is_null($Query)) ? $this->Query : $Query;
+
+    $this->UntilOrSince = "";
+    if( ! is_null($since) ){
+      $this->UntilOrSince .= "&since=$since";
+    }
+    if( ! is_null($until) ){
+      $this->UntilOrSince .= "&until=$until";
+    }
+
     $this->LastFunction = debug_backtrace()[1]['function'];
-    if( $this->TryToGetResponse($Query) ){
+    echo $Query.$this->UntilOrSince;
+    if( $this->TryToGetResponse($Query.$this->UntilOrSince) ){
       try{
         $this->data = $this->response->getDecodedBody();
       }catch(Exception $e){
@@ -298,6 +312,15 @@ class FacebookObject{
   public function isLastPage(){
     $this->Count();
     return ( ($this->size < $this->limit) and ($this->size > 0)  );
+  }
+
+  public function next($until=NULL){
+    $until = ( is_null($until) ) ? $this->until : $until;
+    return call_user_func_array( array( $this, "$this->LastFunction" ), [NULL,$until,NULL] );
+  }
+  public function previous($since=NULL){
+    $since = ( is_null($since) ) ? $this->since : $since;
+    return call_user_func_array( array( $this, "$this->LastFunction" ), [NULL,NULL,$since] );
   }
 
   # API accounts methods
@@ -402,30 +425,23 @@ class FacebookObject{
 }
 
 class FacebookPageManager extends FacebookObject{
+  public $limit = 100;
+  public $conversation_fields = ["id","link","updated_time","participants",
+      "message_count","unread_count","snippet","can_reply","is_subscribed"];
 
   public function me( $fields=["id","name"] ){
     return parent::me( $fields );
   }
+
   public function setPage($id_or_username){
     $PageToken = $this->get_account_token($id_or_username);
     $this->setToken($PageToken);
   }
 
-}
-
-class FacebookPageInbox extends FacebookPageManager{
-  public $limit = 5;
-  public $conversation_fields = ["id","link","updated_time","participants",
-      "message_count","unread_count","snippet","can_reply","is_subscribed"];
-
-  public function INBOX($fields=NULL){
-    return $this->CONVERSATIONS($fields);
-  }
-
-  public function CONVERSATIONS($fields=NULL){
+  public function CONVERSATIONS($fields=NULL,$until=NULL,$since=NULL){
     $fields = (is_null($fields)) ? $this->conversation_fields : $fields;
     $fields = self::commaSeparated($fields);
-    $this->GET("me/conversations?fields=$fields&limit=$this->limit");
+    $this->GET("me/conversations?fields=$fields&limit=$this->limit", $until,$since);
     $this->PaginateAndCount();
     return $this->data;
   }
