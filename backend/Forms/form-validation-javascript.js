@@ -10,7 +10,7 @@
 
   function isEmptyString(Input){
     Input = String(Input);
-    Input = Input.trim();
+    Input = Input.trim(); 
     return (
          Input==""
       || Input==" "

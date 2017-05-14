@@ -229,7 +229,7 @@ class FacebookObject{
     }
 
     $this->LastFunction = debug_backtrace()[1]['function'];
-    echo $Query.$this->UntilOrSince;
+    // echo $Query.$this->UntilOrSince;
     if( $this->TryToGetResponse($Query.$this->UntilOrSince) ){
       try{
         $this->data = $this->response->getDecodedBody();
@@ -403,6 +403,9 @@ class FacebookObject{
   }
 
   # Formatting methods
+  public static function parseFacebookDatetime($datetime){
+    return $datetime;
+  }
   public static function commaSeparated($data){
     $commaSeparatedData = "";
     if( is_array($data) ){
@@ -446,4 +449,248 @@ class FacebookPageManager extends FacebookObject{
     return $this->data;
   }
 
+}
+
+class FacebookPageInsights extends FacebookPageManager{
+  public $limit = 100;
+
+  public function Fans($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_fan_adds_by_paid_non_paid_unique&limit=$this->limit", $until,$since);
+    $this->data = self::parse_Fans($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_Fans($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_Fans_row", $data);
+    return $parsed;
+  }
+  public static function parse_Fans_row($r){
+    // $p for "parsed"
+    // $r for "raw"
+    $p = array();
+    $p["facebookfans_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+    $p["facebookfans_unpaid"] = $r["value"]["unpaid"];
+    $p["facebookfans_paid"] = $r["value"]["paid"];
+    $p["facebookfans_total"] = $r["value"]["total"];
+
+    return $p;
+  }
+  public function CurrentFans(){
+    $this->GET("me/insights?metric=page_fans");
+    $this->data = end($this->data["data"][0]["values"])["value"]; //Parsing
+    return $this->data;
+  }
+  public function FansHistory($since=NULL,$until=NULL){
+    $CurrentFans = $this->CurrentFans();
+    $Fans = $this->Fans($since,$until);
+    $FansSum = self::column_sum_bykey( $Fans, "facebookfans_total");
+
+    $RollingFans = $CurrentFans - $FansSum;
+
+    $FansHistory = array();
+    foreach($Fans as $row){
+      $RollingFans += $row["facebookfans_total"];
+      $FansHistory[] =
+        array(
+          "facebookfans_daytime" => $row["facebookfans_daytime"],
+          "facebookfans_history" => $RollingFans
+        );
+    }
+    return $FansHistory;
+  }
+
+  public function FanSources($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_fans_by_like_source&limit=$this->limit", $until,$since);
+    $this->data = self::parse_FanSources($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_FanSources($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_FanSources_row", $data);
+    return $parsed;
+  }
+  public static function parse_FanSources_row($r){
+    $p = array();
+    $p["facebookfansource_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    $p["facebookfansource_reactivateduser"] = self::ZeroIfNotfound($r,"pagelike_adder_for_reactivated_users");
+    $p["facebookfansource_oldinvite"] = self::ZeroIfNotfound($r,"reminder_box_invite");
+    $p["facebookfansource_invite"] = self::ZeroIfNotfound($r,"page_browser_invite");
+    $p["facebookfansource_mobilebrowser"] = self::ZeroIfNotfound($r,"mobile_page_browser");
+    $p["facebookfansource_story"] = self::ZeroIfNotfound($r,"feed_story");
+    $p["facebookfansource_profile"] = self::ZeroIfNotfound($r,"page_profile");
+    $p["facebookfansource_timeline"] = self::ZeroIfNotfound($r,"page_timeline");
+    $p["facebookfansource_promotedpost"] = self::ZeroIfNotfound($r,"sponsored_story");
+    $p["facebookfansource_hovercard"] = self::ZeroIfNotfound($r,"hovercard");
+    $p["facebookfansource_api"] = self::ZeroIfNotfound($r,"api");
+    $p["facebookfansource_search"] = self::ZeroIfNotfound($r,"search");
+    $p["facebookfansource_mobile"] = self::ZeroIfNotfound($r,"mobile");
+    $p["facebookfansource_mobile_ads"] = self::ZeroIfNotfound($r,"mobile_ads");
+    $p["facebookfansource_banhammer"] = self::ZeroIfNotfound($r,"banhammer");
+    $p["facebookfansource_ads"] = self::ZeroIfNotfound($r,"ads");
+    $p["facebookfansource_friendinvite"] = self::ZeroIfNotfound($r,"page_suggestion");
+
+    $p["facebookfansource_total"] =
+        $p["facebookfansource_reactivateduser"] +
+        $p["facebookfansource_oldinvite"] +
+        $p["facebookfansource_invite"] +
+        $p["facebookfansource_mobilebrowser"] +
+        $p["facebookfansource_story"] +
+        $p["facebookfansource_profile"] +
+        $p["facebookfansource_timeline"] +
+        $p["facebookfansource_promotedpost"] +
+        $p["facebookfansource_hovercard"] +
+        $p["facebookfansource_api"] +
+        $p["facebookfansource_search"] +
+        $p["facebookfansource_mobile"] +
+        $p["facebookfansource_mobile_ads"] +
+        $p["facebookfansource_banhammer"] +
+        $p["facebookfansource_ads"] +
+        $p["facebookfansource_friendinvite"] ;
+    return $p;
+  }
+
+  public static function ZeroIfNotfound($array,$key){
+    if( array_key_exists("value",$array) ){
+      $array = $array["value"];
+      $x = ( array_key_exists($key,$array) ) ? $array[$key] : 0;
+      return $x;
+    }else {
+      return 0;
+    }
+  }
+
+  public function Consumption($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_consumptions_by_consumption_type&limit=$this->limit", $until,$since);
+    $this->data = self::parse_Consumption($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_Consumption($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_Consumption_row", $data);
+    return $parsed;
+  }
+  public static function parse_Consumption_row($r){
+    $p = array();
+    $p["facebookconsumption_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    $p["facebookconsumption_otherclicks"] = $r["value"]["other clicks"];
+    $p["facebookconsumption_videoplay"] = $r["value"]["video play"];
+    $p["facebookconsumption_linkclick"] = $r["value"]["link clicks"];
+    $p["facebookconsumption_photoview"] = $r["value"]["photo view"];
+
+    $p["facebookconsumption_total"] =
+        $p["facebookconsumption_otherclicks"] +
+        $p["facebookconsumption_videoplay"] +
+        $p["facebookconsumption_linkclick"] +
+        $p["facebookconsumption_photoview"] ;
+
+    return $p;
+  }
+
+  public function Stories($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_stories_by_story_type&limit=$this->limit", $until,$since);
+    $this->data = self::parse_Story($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_Story($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_Story_row", $data);
+    return $parsed;
+  }
+  public static function parse_Story_row($r){
+    $p = array();
+    $p["facebookstory_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    $p["facebookstory_fan"] = $r["value"]["fan"];
+    $p["facebookstory_other"] = $r["value"]["other"];
+    $p["facebookstory_pagepost"] = $r["value"]["page post"];
+    $p["facebookstory_userpost"] = $r["value"]["user post"];
+    $p["facebookstory_checkin"] = $r["value"]["checkin"];
+    $p["facebookstory_question"] = $r["value"]["question"];
+    $p["facebookstory_coupon"] = $r["value"]["coupon"];
+    $p["facebookstory_event"] = $r["value"]["event"];
+    $p["facebookstory_mention"] = $r["value"]["mention"];
+
+    $p["facebookstory_total"] =
+        $p["facebookstory_fan"] +
+        $p["facebookstory_other"] +
+        $p["facebookstory_pagepost"] +
+        $p["facebookstory_userpost"] +
+        $p["facebookstory_checkin"] +
+        $p["facebookstory_question"] +
+        $p["facebookstory_coupon"] +
+        $p["facebookstory_event"] +
+        $p["facebookstory_mention"] ;
+
+    return $p;
+  }
+
+  public function Impressions($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_impressions_by_paid_non_paid&limit=$this->limit", $until,$since);
+    $this->data = self::parse_Impressions($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_Impressions($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_Impressions_row", $data);
+    return $parsed;
+  }
+  public static function parse_Impressions_row($r){
+    $p = array();
+    $p["facebookimpressions_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    $p["facebookimpressions_paid"] = $r["value"]["paid"];
+    $p["facebookimpressions_unpaid"] = $r["value"]["unpaid"];
+    $p["facebookimpressions_total"] = $r["value"]["total"];
+
+    return $p;
+  }
+
+  public function Reactions($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_actions_post_reactions_total&limit=$this->limit", $until,$since);
+    $this->data = self::parse_Reactions($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_Reactions($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_Reactions_row", $data);
+    return $parsed;
+  }
+  public static function parse_Reactions_row($r){
+    $p = array();
+    $p["facebookreactions_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    $p["facebookreactions_like"] = $r["value"]["like"];
+    $p["facebookreactions_love"] = $r["value"]["love"];
+    $p["facebookreactions_wow"] = $r["value"]["wow"];
+    $p["facebookreactions_haha"] = $r["value"]["haha"];
+    $p["facebookreactions_sorry"] = $r["value"]["sorry"];
+    $p["facebookreactions_anger"] = $r["value"]["anger"];
+
+    $p["facebookreactions_total"] =
+        $p["facebookreactions_like"] +
+        $p["facebookreactions_love"] +
+        $p["facebookreactions_wow"] +
+        $p["facebookreactions_haha"] +
+        $p["facebookreactions_sorry"] +
+        $p["facebookreactions_anger"] ;
+
+    return $p;
+  }
+
+
+  public static function column_sum_bykey($table,$key){
+    $sum = 0.0;
+    foreach($table as $row){
+      $sum += $row[$key];
+    }
+    return $sum;
+  }
 }

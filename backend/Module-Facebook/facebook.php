@@ -1,7 +1,7 @@
 <?php
 
 // $FB = new FacebookPageManager( $MKTi );
-$FB = new FacebookPageManager($MKTi);
+$FB = new FacebookPageInsights($MKTi);
 // $FB->loadToken();
 /*
 // if( $FB->isNewTokenAvailable() ){
@@ -27,11 +27,11 @@ $FB = new FacebookPageManager($MKTi);
         echo "Me:<br>";
         print_r( $FB->me() );
         echo "<br>";
-
-        $data = $FB->CONVERSATIONS();
-        echo "Inbox:<br>";
-        echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
-        print_r( $data );
+        DISPLAY::asTable( $FB->FanSources("2017-03-01") );
+        // $data = $FB->CONVERSATIONS();
+        // echo "Inbox:<br>";
+        // echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
+        // print_r( $data );
 
 
 
@@ -43,6 +43,8 @@ $FB = new FacebookPageManager($MKTi);
         //   print_r( $data );
         // }
 
+      }else {
+        echo "No Token";
       }
       echo '<br><a href="'.$FB->getLoginURL().'">Entra con Facebook</a>';
     ?>

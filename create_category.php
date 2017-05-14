@@ -1,7 +1,7 @@
 <?php
 /* Eviroment: $ECOM, $SQLConnection, $con & defined(ECOMMERCE_ROUTES) */
 include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
-
+     
 $error_message = "";
 if( $SQLConnection->status() ){
 
