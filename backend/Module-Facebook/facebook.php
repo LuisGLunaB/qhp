@@ -1,7 +1,7 @@
 <?php
 
 // $FB = new FacebookPageManager( $MKTi );
-$FB = new FacebookPageInsights($MKTi);
+$FB = new FacebookAds($Yo);
 // $FB->loadToken();
 /*
 // if( $FB->isNewTokenAvailable() ){
@@ -24,30 +24,19 @@ $FB = new FacebookPageInsights($MKTi);
     <?php
       if( $FB->hasToken() ){
 
-        echo "Me:<br>";
-        print_r( $FB->me() );
-        echo "<br>";
-        DISPLAY::asTable( $FB->OnlineFans("2017-03-01") );
-        DISPLAY::asTable(  FacebookPageInsights::table_percentiles($FB->data) );
+        // echo "Alquimia:<br>";
+        // DISPLAY::asTable( $FB->FansByCountry("AlquimiaTransforma","2015-05-10") );
+        // echo "GrupoKP:<br>";
+        // DISPLAY::asTable( $FB->FansByCountry("GrupoKP","2015-05-10") );
+        // echo "Colateral:<br>";
+        // DISPLAY::asTable( $FB->FansByCountry("colateralmkt","2015-05-10") );
+        // echo "Merkategia:<br>";
+        // DISPLAY::asTable( $FB->FansByCountry("merkategia","2015-05-10") );
+        // echo "MKTi:<br>";
+        // DISPLAY::asTable( $FB->FansByCountry("mkti.mx","2015-05-10") );
 
-
-        // list($avg,$std) = FacebookPageInsights::columns_avgstd($FB->data);
-        // print_r( $avg );
-        // print_r( $std );
-        // $data = $FB->CONVERSATIONS();
-        // echo "Inbox:<br>";
-        // echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
-        // print_r( $data );
-
-
-
-        // while( ! $FB->isLastPage() ){
-        //   echo "<br><br>";
-        //   $data = $FB->next();
-        //   echo "Inbox:<br>";
-        //   echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";
-        //   print_r( $data );
-        // }
+        echo "Cuentas:<br>";
+        DISPLAY::asTable( $FB->AdAccounts() );
 
       }else {
         echo "No Token";

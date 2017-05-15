@@ -709,6 +709,52 @@ class FacebookPageInsights extends FacebookPageManager{
     return $p;
   }
 
+  public function CurrentFansByCountry($page="me"){
+    $data = $this->FansByCountry($page);
+    $i = (sizeof($data)-1);
+    $this->data = $data[$i];
+    return $this->data;
+  }
+  public function FansByCountry($page="me",$since=NULL,$until=NULL){
+    $this->GET("$page/insights?metric=page_fans_country&limit=$this->limit", $until,$since);
+    $this->data = self::parse_FansByCountry($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_FansByCountry($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_FansByCountry_row", $data);
+    return $parsed;
+  }
+  public static function parse_FansByCountry_row($r){
+    $p = array();
+    $p["facebookpagefans_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
+
+    if( sizeof($r["value"])==0 ){
+      $p["facebookpagefans_country"] = "";
+      $p["facebookpagefans_country_total"] = 0;
+      $p["facebookpagefans_country_rate"] = 0;
+      $p["facebookpagefans_total"] = 0;
+    }else{
+      $sum = 0;
+      $max = -1;
+      $topcountry = "";
+      foreach( $r["value"] as $country => $fans){
+        $sum += $fans;
+        if($max<$fans){
+          $max = $fans;
+          $topcountry = $country;
+        }
+      }
+      $p["facebookpagefans_country"] = $topcountry;
+      $p["facebookpagefans_country_total"] = $max;
+      $p["facebookpagefans_country_rate"] = round($max/$sum,2);
+      $p["facebookpagefans_total"] = $sum;
+    }
+
+    return $p;
+  }
+
   public static function columns_sum($table){
     $keys = array_keys($table[0]);
     foreach($keys as $k){
@@ -760,7 +806,8 @@ class FacebookPageInsights extends FacebookPageManager{
     $stdkeys = self::columns_std($table,$keyaverages);
     return [$keyaverages,$stdkeys];
   }
-
+  // public static function columns_max($table)
+  // public static function columns_min($table)
   public static function percentile($z){
     $zvalues = self::zvaluestable();
     $limit = sizeof($zvalues)-1;
@@ -889,4 +936,29 @@ class FacebookPageInsights extends FacebookPageManager{
     }
     return $return;
   }
+}
+
+class FacebookAds extends FacebookPageManager{
+    public $AdAccountsFields = ["account_id","account_status","amount_spent","balance","currency","name","spend_cap","is_notifications_enabled"];
+    public function AdAccounts($fields=NULL){
+      $fields = ( is_null($fields) ) ? $this->AdAccountsFields : $fields;
+      $fields = self::commaSeparated($fields);
+      $this->GET("me/adaccounts?fields=$fields&limit=$this->limit");
+      $this->data = self::parse("FacebookAds::parse_AdAccounts_row", $this->data["data"]);
+      $this->data  = array_sort($this->data, 'fbadsaccount_name', SORT_ASC);
+      return $this->data;
+    }
+    public static function parse_AdAccounts_row($r){
+      $p = array();
+      $p["fbadsaccount_id"] = $r["account_id"];
+      $p["fbadsaccount_name"] = $r["name"];
+      $p["fbadsaccount_currency"] = $r["currency"];
+      $p["fbadsaccount_spent"] = $r["amount_spent"]/100;
+      $p["fbadsaccount_balance"] = $r["balance"]/100;
+      $p["fbadsaccount_cap"] = $r["spend_cap"]/100;
+      $p["fbadsaccount_status"] = $r["account_status"];
+      $p["fbadsaccount_notifications"] = $r["is_notifications_enabled"];
+
+      return $p;
+    }
 }
