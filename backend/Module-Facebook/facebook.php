@@ -27,7 +27,13 @@ $FB = new FacebookPageInsights($MKTi);
         echo "Me:<br>";
         print_r( $FB->me() );
         echo "<br>";
-        DISPLAY::asTable( $FB->FanSources("2017-03-01") );
+        DISPLAY::asTable( $FB->OnlineFans("2017-03-01") );
+        DISPLAY::asTable(  FacebookPageInsights::table_percentiles($FB->data) );
+
+
+        // list($avg,$std) = FacebookPageInsights::columns_avgstd($FB->data);
+        // print_r( $avg );
+        // print_r( $std );
         // $data = $FB->CONVERSATIONS();
         // echo "Inbox:<br>";
         // echo "size: $FB->size since: $FB->since until: $FB->until function: $FB->LastFunction <br>";

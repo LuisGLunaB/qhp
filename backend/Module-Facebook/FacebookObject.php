@@ -484,7 +484,7 @@ class FacebookPageInsights extends FacebookPageManager{
   public function FansHistory($since=NULL,$until=NULL){
     $CurrentFans = $this->CurrentFans();
     $Fans = $this->Fans($since,$until);
-    $FansSum = self::column_sum_bykey( $Fans, "facebookfans_total");
+    $FansSum = self::columns_sum_bykey( $Fans, "facebookfans_total");
 
     $RollingFans = $CurrentFans - $FansSum;
 
@@ -685,12 +685,208 @@ class FacebookPageInsights extends FacebookPageManager{
     return $p;
   }
 
+  public function OnlineFans($since=NULL,$until=NULL){
+    $this->GET("me/insights?period=day&metric=page_fans_online&limit=$this->limit", $until,$since);
+    $this->data = self::parse_OnlineFans($this->data);
+    $this->PaginateAndCount();
+    return $this->data;
+  }
+  public static function parse_OnlineFans($data){
+    $data = $data["data"][0]["values"];
+    $parsed = self::parse("FacebookPageInsights::parse_OnlineFans_row", $data);
+    return $parsed;
+  }
+  public static function parse_OnlineFans_row($r){
+    $p = array();
+    $p["facebookonlinefans_daytime"] = self::parseFacebookDatetime( $r["end_time"] );
 
-  public static function column_sum_bykey($table,$key){
+    $p["facebookonlinefans_total"] = 0;
+    for ($h = 0; $h <= 23; $h++) {
+      $p["facebookonlinefans_$h"] = self::ZeroIfNotfound($r,"$h");
+      $p["facebookonlinefans_total"] += $p["facebookonlinefans_$h"];
+    }
+
+    return $p;
+  }
+
+  public static function columns_sum($table){
+    $keys = array_keys($table[0]);
+    foreach($keys as $k){
+      $keysums[$k] = 0.0;
+    }
+    foreach($table as $row){
+      foreach($keys as $k){
+        $keysums[$k] += floatval( $row[$k] );
+      }
+    }
+    return $keysums;
+  }
+  public static function columns_sum_bykey($table,$key){
     $sum = 0.0;
     foreach($table as $row){
-      $sum += $row[$key];
+      $sum += floatval( $row[$key] );
     }
     return $sum;
+  }
+  public static function columns_avg($table){
+    $keysums = self::columns_sum($table);
+    $N = sizeof($table);
+
+    $keys = array_keys($table[0]);
+    foreach($keys as $k){
+      $keyaverages[$k] = ( $keysums[$k] / $N );
+    }
+    return $keyaverages;
+  }
+  public static function columns_std($table,$keyaverages=NULL){
+    $variancekeys = self::columns_var($table,$keyaverages);
+
+    $keys = array_keys($table[0]);
+    $stdkeys = array();
+    foreach( $keys as $k){
+      $stdkeys[$k] = sqrt( $variancekeys[$k] );
+    }
+
+    return $stdkeys;
+  }
+  public static function columns_var($table,$keyaverages=NULL){
+    $keyaverages = ( is_null($keyaverages) )? self::columns_avg($table) : $keyaverages;
+    $variancetable = self::table_var($table,$keyaverages);
+    $variancekeys = self::columns_avg($variancetable);
+    return $variancekeys;
+  }
+  public static function columns_avgstd($table,$keyaverages=NULL){
+    $keyaverages = ( is_null($keyaverages) )? self::columns_avg($table) : $keyaverages;
+    $stdkeys = self::columns_std($table,$keyaverages);
+    return [$keyaverages,$stdkeys];
+  }
+
+  public static function percentile($z){
+    $zvalues = self::zvaluestable();
+    $limit = sizeof($zvalues)-1;
+    $is_positive = ($z>=0);
+
+    $zindex = abs($z*10);
+    $index1 = min( floor($zindex), $limit );
+    $index2 = ($index1==$limit) ? $limit : ($index1+1);
+
+    $weight2 = ($zindex-$index1);
+    $weight1 = (1-$weight2);
+
+    $percentile = ( $zvalues[$index1] * $weight1 ) + ( $zvalues[$index2] * $weight2 );
+    if($is_positive){
+      $percentile = (1-$percentile);
+    }
+    return round($percentile,4);
+  }
+  public static function zvaluestable(){
+    $zvalues[0] = 0.5000;
+    $zvalues[1] = 0.4602;
+    $zvalues[2] = 0.4207;
+    $zvalues[3] = 0.3821;
+    $zvalues[4] = 0.3446;
+    $zvalues[5] = 0.3085;
+    $zvalues[6] = 0.2743;
+    $zvalues[7] = 0.2420;
+    $zvalues[8] = 0.2119;
+    $zvalues[9] = 0.1841;
+    $zvalues[10] = 0.1587;
+    $zvalues[11] = 0.1357;
+    $zvalues[12] = 0.1151;
+    $zvalues[13] = 0.0968;
+    $zvalues[14] = 0.0808;
+    $zvalues[15] = 0.0668;
+    $zvalues[16] = 0.0548;
+    $zvalues[17] = 0.0446;
+    $zvalues[18] = 0.0359;
+    $zvalues[19] = 0.0287;
+    $zvalues[20] = 0.0228;
+    $zvalues[21] = 0.0179;
+    $zvalues[22] = 0.0139;
+    $zvalues[23] = 0.0107;
+    $zvalues[24] = 0.0082;
+    $zvalues[25] = 0.0062;
+    $zvalues[26] = 0.0047;
+    $zvalues[27] = 0.0035;
+    $zvalues[28] = 0.0026;
+    $zvalues[29] = 0.0019;
+    $zvalues[30] = 0.0013;
+    $zvalues[31] = 0.0010;
+    $zvalues[32] = 0.0007;
+    $zvalues[33] = 0.0005;
+    $zvalues[34] = 0.0003;
+    $zvalues[35] = 0.0002;
+
+    return $zvalues;
+  }
+  public static function table_var($table,$keyaverages=NULL){
+    $keyaverages = ( is_null($keyaverages) )? self::columns_avg($table) : $keyaverages;
+
+    $i = 0;
+    $variancetable = array();
+    $keys = array_keys($table[0]);
+
+    foreach($table as $row){
+      foreach($keys as $k){
+        $x = $table[$i][$k];
+        $m = $keyaverages[$k];
+        $variancetable[$i][$k] = pow( $x - $m , 2 );
+      }
+      $i++;
+    }
+
+    return $variancetable;
+  }
+  public static function table_normalization($table,$keyaverages=NULL,$stdkeys=NULL){
+    if( is_null($stdkeys) ){
+      list($avg,$std) = self::columns_avgstd($table,$keyaverages);
+    }else{
+      $avg = ( is_null($keyaverages) ) ? self::columns_avg($table) : $keyaverages;
+      $std = $stdkeys;
+    }
+    $i = 0;
+    $keys = array_keys($table[0]);
+    $normalizedtable = array();
+    foreach($table as $row){
+      foreach($keys as $j){
+        $m = $avg[$j];
+        $s = $std[$j];
+        $x = $table[$i][$j];
+        if($s!=0){
+          $normalizedtable[$i][$j] = (($x - $m) / $s);
+        }else{
+          $normalizedtable[$i][$j] = 0;
+        }
+
+      }
+      $i++;
+    }
+
+    return $normalizedtable;
+  }
+  public static function table_percentiles($table,$normalizedtable=NULL){
+    $normalizedtable = (is_null($normalizedtable)) ? self::table_normalization($table) : $normalizedtable;
+    $percentiletable = self::table_function($normalizedtable,"FacebookPageInsights::percentile");
+    return $percentiletable;
+  }
+  public static function table_function($table, $function, $args = [] ){
+    $return = array();
+
+    $i = 0;
+    $keys = array_keys($table[0]);
+    foreach($table as $row){
+      foreach($keys as $j){
+
+        if( sizeof($args)>0 ){
+          $args = array_merge( [ $table[$i][$j] ] , $args );
+        }else{
+          $args = [ $table[$i][$j] ];
+        }
+
+        $return[$i][$j] =  call_user_func_array( $function, $args );
+      }
+      $i++;
+    }
+    return $return;
   }
 }
