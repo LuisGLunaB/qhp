@@ -1,7 +1,7 @@
 <?php
 /* Eviroment: $ECOM, $SQLConnection, $con & defined(ECOMMERCE_ROUTES) */
 include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
-     
+
 $error_message = "";
 if( $SQLConnection->status() ){
 
@@ -42,6 +42,7 @@ xmlns="http://www.w3.org/1999/xhtml">
 <body onresize="" onload="">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
+
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
       <div class="ui-content small row left-align" >
 

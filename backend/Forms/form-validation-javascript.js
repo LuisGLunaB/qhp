@@ -10,7 +10,7 @@
 
   function isEmptyString(Input){
     Input = String(Input);
-    Input = Input.trim(); 
+    Input = Input.trim();
     return (
          Input==""
       || Input==" "
@@ -20,6 +20,15 @@
       || Input == null
       || Input == undefined
     );
+  }
+
+  function LockForm($Form){
+    $Form.css( "pointer-events", "none" );
+    $Form.css( "opacity", "0.3" );
+  }
+  function UnlockForm($Form){
+    $Form.css( "pointer-events", "auto" );
+    $Form.css( "opacity", "1.0" );
   }
 
   function clear_form_error(Form){

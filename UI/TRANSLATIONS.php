@@ -53,6 +53,15 @@ $TRANSLATIONS["nombre_de_la_categoria"]["EN"] = "Category name";
 $TRANSLATIONS["nueva_categoria"]["ES"] = "Nueva categoría";
 $TRANSLATIONS["nueva_categoria"]["EN"] = "New category";
 
+$TRANSLATIONS["elegir_categoria_padre"]["ES"] = "Elegir categoría padre (opcional)";
+$TRANSLATIONS["elegir_categoria_padre"]["EN"] = "Select parent category (optional)";
+
+$TRANSLATIONS["categoria_padre"]["ES"] = "Categoría Padre";
+$TRANSLATIONS["categoria_padre"]["EN"] = "Parent Category";
+
+$TRANSLATIONS["nivel"]["ES"] = "Nivel";
+$TRANSLATIONS["nivel"]["EN"] = "Level";
+
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la tienda.";
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
 

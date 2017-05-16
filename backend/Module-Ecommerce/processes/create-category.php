@@ -7,8 +7,10 @@ $form_error = "";
 
 extract($_POST);
 
+$parent_category_id = (isEmptyString($category_name)) ? 0 : $parent_category_id;
+
 if( notEmptyString($category_name) ){
-  $ECOM->CreateCategory( $category_name );
+  $ECOM->CreateCategory( $category_name, $category_level, $parent_category_id);
   if( $ECOM->status() ){
     $form_status = True;
     $form_data = $ECOM->lastInsertId();
