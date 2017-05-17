@@ -82,13 +82,18 @@ class ECOMMERCE extends SQLObject{
 
     return $this->VariableOrErrorvalue( $this->lastInsertId() );
   }
-  public function ReadAllCategories($ORDERBY="ASC",$level=1,$max_level=NULL,$store_id=NULL){
+  public function ReadCategoriesAll($parent_category_id=0,$max_level=NULL,$level=1,$ORDERBY="ASC",$store_id=NULL){
     $store_id = ( is_null($store_id) ) ? $this->store_id : $store_id;
-    $max_level = ( is_null($max_level) ) ? 3 : 3;
-    $level = (int) $level;
-    $ORDERBY = ($ORDERBY=="ASC") ? "ASC" : "DESC";
+    $db_max_level = $this->ReadCategoriesMaxLevel($store_id);
+    $max_level = ( is_null($max_level) ) ? $db_max_level : $max_level;
+    $max_level = min($db_max_level,$max_level);
 
-    $binds[":level"] = (int) $level;
+    $level = (int) min(max(1,$level),$max_level);
+    $ORDERBY = ($ORDERBY=="ASC") ? "ASC" : "DESC";
+    $children_category_level = (int) ($this->ReadCategoryLevel($parent_category_id) + 1);
+    $children_category_level = max($children_category_level,$level);
+
+    $binds[":parent_category_id"] = (int) $parent_category_id;
     $binds[":store_id"] = (int) $store_id;
     $category_fields = $this->category_fields;
 
@@ -114,18 +119,21 @@ class ECOMMERCE extends SQLObject{
     }
     $ORDERS = implode(",",$ORDERS);
 
+    $is_last = ($children_category_level>$max_level);
+    $parent_filter = ($is_last) ?
+      "c".($children_category_level-1).".category_id = :parent_category_id " :
+      "c$children_category_level.parent_category_id = :parent_category_id ";
     $data = $this->QUERY(
      "SELECT
         $SELECTS
       FROM categories AS c$level
         $JOINS
       WHERE
-        c$level.category_level = :level
+        $parent_filter
         AND c$level.store_id = :store_id
       ORDER BY
         $ORDERS
       ", $binds);
-
     return $this->VariableOrErrorvalue( $data );
   }
   public function ReadCategoriesByLevel($category_level=1, $ORDERBY="ASC", $store_id=NULL){
@@ -150,7 +158,7 @@ class ECOMMERCE extends SQLObject{
 
     return $this->VariableOrErrorvalue( $data );
   }
-  public function ReadCategoryChildren($category_id, $ORDERBY="ASC",$store_id=NULL){
+  public function ReadCategoryChildren($category_id=0, $ORDERBY="ASC",$store_id=NULL){
     $store_id = (is_null($store_id)) ? $this->store_id : $store_id;
     $ORDERBY = ($ORDERBY=="ASC") ? "ASC" : "DESC";
 
@@ -170,23 +178,58 @@ class ECOMMERCE extends SQLObject{
       ORDER BY
         category_name $ORDERBY;
       ", $binds);
+      if( sizeof($data)!=0 ){
+        return $this->VariableOrErrorvalue( $data );
+      }else{
+        return NULL;
+      }
 
-      return $this->VariableOrErrorvalue( $data );
     }else{
       return $this->ReadCategoriesByLevel( 1 , $ORDERBY, $store_id);
     }
 
   }
-
-  public function ReadCategory($category_id){
-    $binds[":category_id"] = (int) $category_id;
+  public function ReadCategoriesMaxLevel($store_id){
+    $store_id = (is_null($store_id)) ? $this->store_id : $store_id;
+    $store_id = (int) $store_id;
 
     $data = $this->QUERY(
-    "SELECT * FROM categories
-     WHERE category_id = :category_id;
-    ", $binds);
+    "SELECT
+      MAX(category_level) AS category_level
+     FROM categories
+     WHERE store_id = $store_id;
+    ", []);
 
-    return $this->VariableOrErrorvalue( $data[0] );
+    return $this->VariableOrErrorvalue( $data[0]["category_level"] );
+  }
+  public function ReadCategoryParents($category_id){
+    $Parents = [];
+    $keepLooping = True;
+    while($keepLooping){
+      $CurrentCategoryRow = $this->ReadCategory($category_id);
+      array_unshift($Parents, $CurrentCategoryRow);
+      // $Parents[] = $CurrentCategoryRow;
+      $category_id = $CurrentCategoryRow["parent_category_id"];
+
+      $keepLooping = (! ($category_id==0 or is_null($category_id)) );
+    }
+    return $Parents;
+  }
+  public function ReadCategory($category_id){
+    if($category_id!=0){
+      $binds[":category_id"] = (int) $category_id;
+
+      $data = $this->QUERY(
+      "SELECT * FROM categories
+       WHERE category_id = :category_id;
+      ", $binds);
+
+      return $this->VariableOrErrorvalue( $data[0] );
+    }else{
+      $this->ErrorManager->handleError("No Category with id: $category_id" );
+      return NULL;
+    }
+
   }
   public function ReadCategoryField($category_id,$field){
     $data = $this->ReadCategory($category_id);
@@ -198,7 +241,25 @@ class ECOMMERCE extends SQLObject{
     return $this->VariableOrErrorvalue( $var );
   }
   public function ReadCategoryLevel($category_id){
-    return $this->ReadCategoryField($category_id,"category_level");
+    if($category_id==0){
+      return 0;
+    }else{
+      return $this->ReadCategoryField($category_id,"category_level");
+    }
+  }
+
+  public function ReadCategoryBranches($id=0,$ORDERBY="ASC",$store_id=NULL){
+    $data = $this->ReadCategoryChildren($id ,$ORDERBY,$store_id);
+
+    $children = [];
+    if(sizeof($data)>0){
+      foreach($data as $index => $row){
+        $children = self::ReadCategoryBranches( $row["category_id"] ,$ORDERBY,$store_id);
+        $data[$index]["children"] = $children;
+      }
+    }
+
+    return $data; //$data = NULL if no children found.
   }
 
 }

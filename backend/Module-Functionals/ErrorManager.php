@@ -88,7 +88,7 @@ class ErrorManager{
 
 function alert_if_debugging($string){
 	if( array_key_exists("debugging", $GLOBALS) ){
-		$debugging = $_GLOBALS["debugging"];
+		$debugging = $GLOBALS["debugging"];
 	}else{
 		$debugging = False;
 	}

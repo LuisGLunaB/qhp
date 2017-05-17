@@ -6,7 +6,12 @@
   $category_options = NAVIGATE::buildKeyValueOptions( $category_options );
 
 ?>
-<?php DISPLAY::asTable( $ECOM->ReadAllCategories() ); ?>
+<?php
+// $Tree = $ECOM->ReadCategoryBranches();
+// DISPLAY::asJSON( $Tree );
+print_r( $ECOM->ReadCategoryBranches(10) );
+DISPLAY::asTable( $ECOM->ReadCategoriesAll() );
+?>
 <form id="create-category-form" action="" method="post">
 
     <input type="hidden" name="form" value="create-category-form">

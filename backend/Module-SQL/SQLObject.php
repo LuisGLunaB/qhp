@@ -224,7 +224,7 @@ class SQLObject{
       $fetch = ( substr($query,0,6) == "SELECT" ) ? True : $fetch;
       return ($fetch) ? $this->tryFetchTable() : NULL;
     }else{
-      return NULLS;
+      return NULL;
     }
   }
   # Query execution Methods

@@ -37,29 +37,35 @@ class DISPLAY{
     }
   }
   public static function asTable($data,$class="",$display=True){
+    $table = "";
     if( sizeof($data)>0){
-    $table = '<table class="'.$class.'">';
-        # First row (headers)
-        $columns = array_keys($data[0]);
-        $table .= "<thead><tr>";
-        foreach($columns as $column){
-          $table .= "<th>$column</th>";
-        }
-        $table .= "</tr></thead>";
-
-        # All other rows
-      $table .= "<tbody>";
-        foreach($data as $row){
-          $table .= "<tr>";
+    $keys = (is_null($data[0])) ? NULL : array_keys($data[0]);
+      if( !is_null($keys) ){
+      $table = '<table class="'.$class.'">';
+          # First row (headers)
+          $columns = $keys;
+          $table .= "<thead><tr>";
           foreach($columns as $column){
-            $table .= "<td>$row[$column]</td>";
+            $table .= "<th>$column</th>";
           }
-          $table .= "</tr>";
-        }
-      $table .= "</tbody>";
-      $table .= "</table>";
+          $table .= "</tr></thead>";
+
+          # All other rows
+        $table .= "<tbody>";
+          foreach($data as $row){
+            $table .= "<tr>";
+            foreach($columns as $column){
+              $table .= "<td>$row[$column]</td>";
+            }
+            $table .= "</tr>";
+          }
+        $table .= "</tbody>";
+        $table .= "</table>";
+      }
     }else{
-      $table = self::NoDataMessage();
+      if(!is_null($data)){
+        $table = self::NoDataMessage();
+      }
     }
     self::showData( $table,$display);
     return $table;
