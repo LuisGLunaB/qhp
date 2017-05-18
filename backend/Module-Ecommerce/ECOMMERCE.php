@@ -262,4 +262,36 @@ class ECOMMERCE extends SQLObject{
     return $data; //$data = NULL if no children found.
   }
 
+  public static function ShowTree($data,$level=1,$children_field="children"){
+    if( sizeof($data)>0 and !is_null($data) ){
+      foreach($data as $index => $row){
+        $row["branch_id"] = $row["category_id"];
+        $row["parent_branch"] = $row["parent_category_id"];
+        $row["branch_level"] = $level;
+        self::ShowTreeBranch($row);
+        self::ShowTree( $row["$children_field"] , ($level+1) );
+      }
+    }
+  }
+
+  public static function ShowTreeBranch($branch){
+    // $branch is an associative array of 1 row of data.
+    $b = $branch;
+    $attributes = self::Associative2DataAttributes($b);
+    echo "
+    <div $attributes class='tree-branch branch-id-$b[branch_id] parent-branch-$b[parent_branch] branch-level-$b[branch_level]' >
+      <a href='javascript:{}'>$b[category_name]</a>
+    </div>
+    ";
+  }
+
+  public static function Associative2DataAttributes($Assoc){
+    $HTMLAttributes = "";
+    foreach($Assoc as $key => $value ){
+      if(!is_array($value)){
+        $HTMLAttributes .= " data-$key='$value' ";
+      }
+    }
+    return $HTMLAttributes;
+  }
 }

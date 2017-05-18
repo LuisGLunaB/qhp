@@ -5,6 +5,7 @@ if( ! defined("ROOT") ){ define("ROOT", $ROOT); }
 define( "ECOMMERCE_ROUTE", ("$ROOT/backend/Module-Ecommerce/") );
 define( "ECOMMERCE_ROUTE_forms", (ECOMMERCE_ROUTE."forms/") );
 define( "ECOMMERCE_ROUTE_processes", (ECOMMERCE_ROUTE."processes/") );
+define( "ECOMMERCE_ROUTE_blocks", (ECOMMERCE_ROUTE."blocks/") );
 
 include_once( ROOT . "/backend/Loaders/LOADMODULE_ALL.php");
 include_once( ECOMMERCE_ROUTE . "ECOMMERCE.php"); //Object

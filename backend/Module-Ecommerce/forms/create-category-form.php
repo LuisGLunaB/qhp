@@ -7,10 +7,10 @@
 
 ?>
 <?php
-// $Tree = $ECOM->ReadCategoryBranches();
-// DISPLAY::asJSON( $Tree );
-print_r( $ECOM->ReadCategoryBranches(10) );
-DISPLAY::asTable( $ECOM->ReadCategoriesAll() );
+
+
+// DISPLAY::asTable( $ECOM->ReadCategoryChildren(0) );
+// DISPLAY::asTable( $ECOM->ReadCategoriesAll() );
 ?>
 <form id="create-category-form" action="" method="post">
 

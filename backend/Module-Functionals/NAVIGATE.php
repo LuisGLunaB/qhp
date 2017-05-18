@@ -68,15 +68,17 @@ class NAVIGATE{
 
   public static function buildKeyValueOptions($table_2d,$selected_value=NULL){
     $options = ["<option value='-' >-</option>"];
-    foreach($table_2d as $row){
-      list($key,$value) = array_values($row);
-      $selected = ($value==$selected_value) ? "selected" : "";
-      $options[] = "<option value='$key' $selected >$value</option>";
+    if(!is_null($table_2d)){
+      foreach($table_2d as $row){
+        list($key,$value) = array_values($row);
+        $selected = ($value==$selected_value) ? "selected" : "";
+        $options[] = "<option value='$key' $selected >$value</option>";
+      }
     }
     return implode("",$options);
   }
 
-  public static function buildFormSelect($Table,$selected_value=NULL,$default="--"){
+  public static function buildFormSelect($Table,$selected_value=NULL,$default="-"){
     $keys = array_keys($Table[0]);
     $name = "name=$keys[0]";
     $value_field = $keys[0];

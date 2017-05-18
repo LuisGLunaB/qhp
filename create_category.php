@@ -44,9 +44,10 @@ xmlns="http://www.w3.org/1999/xhtml">
   <div id="ui-main">
 
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content small row left-align" >
+      <div class="ui-content medium row left-align" >
 
         <?php
+          include_once( ECOMMERCE_ROUTE_blocks. "category-tree.php");
           include_once( ECOMMERCE_ROUTE_forms. "create-category-form.php");
         ?>
       </div>

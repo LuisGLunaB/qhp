@@ -1,7 +1,7 @@
 <?php
 
 // $FB = new FacebookPageManager( $MKTi );
-$FB = new FacebookAds($Yo);
+$FB = new FacebookPageInsights($Yo);
 // $FB->loadToken();
 /*
 // if( $FB->isNewTokenAvailable() ){
@@ -24,19 +24,19 @@ $FB = new FacebookAds($Yo);
     <?php
       if( $FB->hasToken() ){
 
-        // echo "Alquimia:<br>";
-        // DISPLAY::asTable( $FB->FansByCountry("AlquimiaTransforma","2015-05-10") );
-        // echo "GrupoKP:<br>";
-        // DISPLAY::asTable( $FB->FansByCountry("GrupoKP","2015-05-10") );
-        // echo "Colateral:<br>";
-        // DISPLAY::asTable( $FB->FansByCountry("colateralmkt","2015-05-10") );
-        // echo "Merkategia:<br>";
-        // DISPLAY::asTable( $FB->FansByCountry("merkategia","2015-05-10") );
-        // echo "MKTi:<br>";
-        // DISPLAY::asTable( $FB->FansByCountry("mkti.mx","2015-05-10") );
+        echo "Alquimia:<br>";
+        DISPLAY::asTable( $FB->FansByCountry("AlquimiaTransforma","2015-05-10") );
+        echo "GrupoKP:<br>";
+        DISPLAY::asTable( $FB->FansByCountry("GrupoKP","2015-05-10") );
+        echo "Colateral:<br>";
+        DISPLAY::asTable( $FB->FansByCountry("colateralmkt","2015-05-10") );
+        echo "Merkategia:<br>";
+        DISPLAY::asTable( $FB->FansByCountry("merkategia","2015-05-10") );
+        echo "MKTi:<br>";
+        DISPLAY::asTable( $FB->FansByCountry("mkti.mx","2015-05-10") );
 
-        echo "Cuentas:<br>";
-        DISPLAY::asTable( $FB->AdAccounts() );
+        // echo "Cuentas:<br>";
+        // DISPLAY::asTable( $FB->AdAccounts() );
 
       }else {
         echo "No Token";
