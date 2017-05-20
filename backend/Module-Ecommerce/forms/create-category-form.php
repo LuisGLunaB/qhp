@@ -24,9 +24,9 @@
     </select>
 
     <label for="category_name">
-      <?php echo TRANSLATE("nombre_de_la_categoria")." (".TRANSLATE("nivel")." ".($category_level+1).")"; ?>
+      <?php echo TRANSLATE("nueva_categoria")." (".TRANSLATE("nivel")." ".($category_level+1).")"; ?>
     </label>
-    <input type="text" name="category_name" id="category_name" value="">
+    <input type="text" name="category_name" id="category_name" value="" placeholder="<?php pTRANSLATE("nombre_de_la_categoria"); ?>">
 
     <div class="form-error"><?php showFormError(); ?></div>
 

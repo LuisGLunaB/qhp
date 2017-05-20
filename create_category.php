@@ -45,11 +45,15 @@ xmlns="http://www.w3.org/1999/xhtml">
 
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
       <div class="ui-content medium row left-align" >
+        <div class="row">
+            <div class="col s6 m6 l6">
+              <?php include_once( ECOMMERCE_ROUTE_blocks. "category-tree.php"); ?>
+            </div>
+            <div class="col s6 m6 l6">
+              <?php include_once( ECOMMERCE_ROUTE_forms. "create-category-form.php"); ?>
+            </div>
+        </div>
 
-        <?php
-          include_once( ECOMMERCE_ROUTE_blocks. "category-tree.php");
-          include_once( ECOMMERCE_ROUTE_forms. "create-category-form.php");
-        ?>
       </div>
 
   </div>

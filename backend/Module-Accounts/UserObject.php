@@ -325,7 +325,7 @@ class UserObject extends SQLBasicSelector{
   }
 
   # New User methods
-  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=1,$checkRegisters=False){
+  public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=True,$checkRegisters=False){
     $success = False;
     if( $this->hasEnoughIdentificationFields($UserData) ){
         if( ! $this->checkIfUserExists($UserData) ){

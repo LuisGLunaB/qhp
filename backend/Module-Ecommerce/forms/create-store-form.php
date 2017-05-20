@@ -2,7 +2,7 @@
 <input type="hidden" name="form" value="create-store-form">
 
     <label for="store_name"><?php pTRANSLATE("nombre_de_la_tienda"); ?></label>
-    <input type="text" name="store_name" id="store_name" value="">
+    <input type="text" name="store_name" id="store_name" value="" placeholder="<?php pTRANSLATE("mi_nueva_tienda"); ?>">
 
     <div class="form-error"><?php showFormError(); ?></div>
 

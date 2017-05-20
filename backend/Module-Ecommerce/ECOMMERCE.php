@@ -280,7 +280,7 @@ class ECOMMERCE extends SQLObject{
     $attributes = self::Associative2DataAttributes($b);
     echo "
     <div $attributes class='tree-branch branch-id-$b[branch_id] parent-branch-$b[parent_branch] branch-level-$b[branch_level]' >
-      <a href='javascript:{}'>$b[category_name]</a>
+      <a class='waves-effect' href='javascript:{}'>$b[category_name]</a>
     </div>
     ";
   }
