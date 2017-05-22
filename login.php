@@ -1,11 +1,21 @@
 <?php
   $ROOT = "."; define("ROOT", $ROOT);
 
-  $login_form_name = "login-form.php";
-  $login_user_redirect = "index-login.php";
+  require_once( ROOT . "/backend/Loaders/LOADMODULE_SQL.php" );
+  $error_message = "";
+  if( $SQLConnection->status() ){
 
-  include_once( ROOT . "/backend/Module-Accounts/login-user-process.php");
-  /* Eviroment: $con, $new_user_status, $new_user_message, $new_user_id, $NewUserForm*/
+      if( was_form_submitted("login-user") ){
+        /* Eviroment: $form_data, $form_status, $form_error */
+        include_once( ROOT . "/backend/Module-Accounts/login-user-process.php");
+        if($form_status){
+          header("Location: index-login.php");
+        }
+      }
+
+  }else{
+  	$error_message = $SQLConnection->message();
+  }
 
 ?>
 
@@ -17,7 +27,7 @@
   </head>
   <body>
     <?php
-      echo "Form: <br>$LoginForm";
+      include_once( ROOT . "/backend/Module-Accounts/login-form.php" );
     ?>
   </body>
 </html>

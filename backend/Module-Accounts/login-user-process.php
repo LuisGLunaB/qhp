@@ -1,33 +1,22 @@
 <?php
-$login_user_status = False;
-$login_user_message = "";
 
-if( key_exists("form",$_POST) ){ if( $_POST["form"] == "login"){
-    ## Login Form was submited ##
-    sleep(3.0); // Sleeping eases Form submission atacks
-    require_once( ROOT . "/backend/Loaders/LOADMODULE_SQL.php" );
-    /* Enviroment: $SQLConnection, $con */
-    if( $SQLConnection->status() ){
-        require_once( ROOT . "/backend/Module-Accounts/UserObject.php" );
+sleep(2.0); // Ease dictionary attacks
 
-        $UsernameOrEmail = ( array_key_exists("email",$_POST) ) ? $_POST["email"] : $_POST["username"] ;
-        $Password = $_POST["password"];
+// require_once( ROOT . "/backend/Module-Accounts/new-user-validation-functions.php" );
+$form_status = False;
+$form_error = "";
+$form_data = NULL;
 
-        $LoginUser = new UserObject();
-        if( $LoginUser->Login( $UsernameOrEmail, $Password) ){
-          $login_user_message = True;
-          if( (!is_null($login_user_redirect)) and $login_user_redirect != "" ){
-            header("Location: $login_user_redirect");}
-        }else{
-          $login_user_message = $LoginUser->message();
-        }
-    }else{
-      $login_user_message = $SQLConnection->message();
-    }
+$UserData = $_POST;
 
-    $login_user_message = utf8_decode($login_user_message);
+require_once( ROOT . "/backend/Module-Accounts/UserObject.php" );
+$UsernameOrEmail = UserObject::extractEmailOrUsername( $UserData );
+$Password = $_POST["password"];
 
-}} // If form is submitted procedure END
-
-$LoginForm = file_get_contents( ROOT . "/backend/Module-Accounts/$login_form_name");
-if($login_user_message != ""){$LoginForm .= '<div class="form-error">'.$login_user_message.'</div>';}
+$LoginUser = new UserObject();
+if( $LoginUser->Login( $UsernameOrEmail, $Password) ){
+  $form_status = True;
+  $form_data = $LoginUser->getUserId();
+}else{
+  $form_error = $LoginUser->message();
+}

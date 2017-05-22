@@ -4,14 +4,15 @@ include_once( ROOT . "/backend/Loaders/LOADMODULE_ALL.php");
 /* Eviroment: $SQLConnection, $con */
 
 if( $SQLConnection->status() ){
-  $User = UserObject::FullLoginWithCookieLevel($required_level=1,$redirect_url=NULL);
-	print_r($User->UserData);
+  include_once( ROOT . "/backend/Module-Accounts/cookie-login-process.php");
+  /* Eviroment: $User -Instance */
+
 
   $SQL = new SQLObject();
   DISPLAY::asTable(  $SQL->QUERY("SELECT user_id, email AS 'correo_electronico' FROM users;")  );
 
 }else{
-	echo $SQLConnection->message();
+	alert( $SQLConnection->message() );
 }
 
 ?>
@@ -20,7 +21,7 @@ if( $SQLConnection->status() ){
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Ya...veamos</title>
+    <title>Loged User</title>
   </head>
   <body>
     <a href="new-user.php">New User</a>
