@@ -327,53 +327,47 @@ class UserObject extends SQLBasicSelector{
   # New User methods
   public function NewUser(array $UserData,$LoginAfterInsert=True,$is_verified=True,$checkRegisters=False){
     $success = False;
-    if( $this->hasEnoughIdentificationFields($UserData) ){
-        if( ! $this->checkIfUserExists($UserData) ){
-            if( self::isValidEmail($UserData["email"],$checkRegisters) ){
-                // Mask and Grant base access
-                $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
-                $maskedUserData = $this->grantBaseAccess($maskedUserData);
-                $maskedUserData["is_verified"] = (int) $is_verified;
+    $ErrorMessage = $this->ValidateNewUserInput($UserData);
 
-                // Get password variables for Insertion and further Login
-                $regularPassword = $maskedUserData["password"];
-                $obscuredPassword = self::ObscurePassword( $maskedUserData["password"] );
-                $maskedUserData["password"] = $obscuredPassword;
+    if( $ErrorMessage == "" ){
+        $UserData = $this->maskUserDataAndGrantDefaultAccess($UserData, $is_verified);
+        $UserData["password"] = self::ObscurePassword( $UserData["password"] );
 
-                // Try to Insert New User
-                $this->lastId = $this->INSERTUSER($maskedUserData);
-                if( ! is_null($this->lastId) ){
-                    if( $LoginAfterInsert ){
-                        $UsernameOrEmail =
-                            (key_exists("username",$maskedUserData)) ?
-                            $maskedUserData["username"] : $maskedUserData["email"];
-                        if( $this->Login($UsernameOrEmail,$regularPassword) ){
-                          # Bravo! You created a New User AND you logged in with it.
-                          $success = True;
-                        }else{
-                          $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
-                        } //Check if Login was succesful
-                    }else{
-                      # Bravo! You created a New User (but you didn't Log in)
-                      $success = True;
-                    }
-                }else{
-                    $this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );
-                } // Check If Insertion was succesful If
-            }else{
-              $this->ErrorManager->handleError("El email no es válido." );
-              $this->Logout();
-            } // Check if Email is valid
-        }else{
-          $this->ErrorManager->handleError("Este usuario ya existe." );
-          $this->Logout();
-        } // Check if user alredy Exists If
-    }else{
-      $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo." );
-    } // Not enough credentials If
+        $this->INSERTUSER($UserData);
+
+        if( ! is_null($this->lastId) ){
+            $success = True;
+            if( $LoginAfterInsert ){
+                $UsernameOrEmail = self::extractEmailOrUsername($UserData);
+                if( ! $this->LoginWithObscuredPassword( $UsernameOrEmail, $UserData["password"] ) ){
+                  $this->ErrorManager->handleError("Error al entrar a la Cuenta recien creada.");
+                }
+            }
+        }else{$this->ErrorManager->handleError("Error al Agregar Usuario a la base de datos." );}
+    }
 
     return $success;
   }
+  public function ValidateNewUserInput($UserData,$checkRegisters=False){
+    $ErrorMessage = "";
+    $ErrorMessage .= ( $this->hasEnoughIdentificationFields($UserData) ) ? "" :
+                       "Datos insuficientes para crear Usuario nuevo.";
+    $ErrorMessage .= ( ! $this->checkIfUserExists($UserData) ) ? "" :
+                       "Este usuario ya existe.";
+    $ErrorMessage .= ( self::isValidEmail($UserData["email"], $checkRegisters) or key_exists("username",$UserData)) ? "" :
+                       "El email no es válido.";
+    return $ErrorMessage;
+  }
+  public static function extractEmailOrUsername($UserData){
+    return ( key_exists("username",$UserData) ) ? $UserData["username"] : $UserData["email"];
+  }
+  public function maskUserDataAndGrantDefaultAccess($UserData, $is_verified){
+    $maskedUserData = self::maskAssocArray($UserData,$this->getTableFields());
+    $maskedUserData = $this->grantBaseAccess($maskedUserData);
+    $maskedUserData["is_verified"] = (int) $is_verified;
+    return $maskedUserData;
+  }
+
   public function checkIfUserExists(array $UserData){
     $MaskedUserData = self::maskAssocArray($UserData,$this->IdentificationFields);
     return ( $this->EXISTS($MaskedUserData) );
@@ -384,16 +378,15 @@ class UserObject extends SQLBasicSelector{
 
     return $NewUser;
   }
-  protected function INSERTUSER($NewUserData){
+  protected function INSERTUSER($UserData){
     $this->lastId = NULL;
-    $maskedUserData = self::maskAssocArray($NewUserData,$this->getTableFields());
 
-    if( $this->hasEnoughIdentificationFields($maskedUserData) ){
+    if( $this->hasEnoughIdentificationFields($UserData) ){
       $INSERT = new SQLInsert( $this->TableName, NULL, $this->con );
-    	$INSERT->INSERT( $maskedUserData );
+    	$INSERT->INSERT( $UserData );
     	if( $INSERT->execute() ){
-        // Insertion was succesful;
-        // $this->lastId has been retrieved properly;
+          // Insertion was succesful;
+          $this->lastId = $INSERT->lastId;
       }else{
         $this->ErrorManager->handleError("Error al crear nuevo usuario.", $INSERT->ErrorManager->getErrorObject() );
       }
@@ -401,7 +394,7 @@ class UserObject extends SQLBasicSelector{
       $this->ErrorManager->handleError("Datos insuficientes para crear Usuario nuevo.");
     }
 
-    return $INSERT->lastId;
+    return $this->lastId;
   }
 
   # Other methods

@@ -3,6 +3,7 @@
 <input type="hidden" name="login_after_insert" value="1">
 <input type="hidden" name="is_verified" value="1">
 
+  <!-- <input id="username" type="text" name="username" value="" placeholder="Nombre de usuario"> -->
   <input id="email" type="text" name="email" value="" placeholder="Email">
   <input type="password" name="password" value="" placeholder="Contraseña">
   <input type="password" name="password_verification" value="" placeholder="Repetir Contraseña">

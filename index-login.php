@@ -7,7 +7,7 @@ if( $SQLConnection->status() ){
   $User = UserObject::FullLoginWithCookieLevel($required_level=1,$redirect_url=NULL);
 	print_r($User->UserData);
 
-  $SQL = new SQLObject(); 
+  $SQL = new SQLObject();
   DISPLAY::asTable(  $SQL->QUERY("SELECT user_id, email AS 'correo_electronico' FROM users;")  );
 
 }else{

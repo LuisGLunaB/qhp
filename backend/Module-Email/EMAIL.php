@@ -190,22 +190,6 @@ class EMAIL{
   }
 }
 
-
-function SendVerificationEmail($From,$To,$Title,$NAME,$VERIFICATION_URL){
-
-	$success = SendEmailWithTemplate(
-		$From, $To ,$Title,
-		array("NAME" => $NAME,"VERIFICATION_URL" => $VERIFICATION_URL),
-		MODULE_ROUTE_Email . "verification_template.php"
-	);
-
-	if( ! $success ) {
-		echo "Error al enviar email de verificación. ";
-	}
-
-	return $success;
-}
-
 function SendEmailWithTemplate($From, $To , $Title, $message, $Template){
 	$EMAIL = new EMAIL( $From, $To , $Title, $message );
 	$EMAIL->SetTemplate( $Template );

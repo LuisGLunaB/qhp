@@ -9,7 +9,7 @@
         /* Eviroment: $form_data, $form_status, $form_error */
         include_once( ROOT . "/backend/Module-Accounts/new-user-process.php");
         if($form_status){
-          header("Location: index.php");
+          header("Location: index-login.php");
         }
       }
 

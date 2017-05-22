@@ -2,7 +2,7 @@
   $ROOT = "."; define("ROOT", $ROOT);
 
   $login_form_name = "login-form.php";
-  $login_user_redirect = "index.php";
+  $login_user_redirect = "index-login.php";
 
   include_once( ROOT . "/backend/Module-Accounts/login-user-process.php");
   /* Eviroment: $con, $new_user_status, $new_user_message, $new_user_id, $NewUserForm*/
