@@ -62,3 +62,50 @@
   background: rgb(220, 220, 220);
   color: #a5a5a5;
 }
+
+.ui-table thead tr{
+  font-size: 19px;
+  background-color: white !important;
+}
+
+.ui-table td{
+  font-size: 16px;
+  font-weight: 400;
+}
+
+.ui-table th, .ui-table td{
+  border-right: 1px solid rgb(208, 208, 208);
+  padding-left: 10px;
+  padding-right: 3px;
+  padding-top: 5px;
+  padding-bottom: 3px;
+}
+
+.ui-table a{
+  font-weight: 500;
+  width: 96%;
+  height: 100%;
+  display: inline-block;
+  border-radius: 3px;
+}
+.ui-table a:hover{
+  text-decoration: underline;
+}
+
+.ui-table tr:nth-child(even) a:hover{
+  background-color: white;
+}
+.ui-table tr:nth-child(odd) a:hover{
+  background-color: #ebf1f5;
+}
+
+.ui-table tr:nth-child(even){
+  background-color: #ebf1f5;
+}
+.ui-table tr:nth-child(odd){
+  background-color: white;
+}
+
+.ui-table tr:hover{
+  /*background-color: #ebf1f5;*/
+}

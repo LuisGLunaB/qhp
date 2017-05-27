@@ -5,12 +5,14 @@ $form_data = NULL;
 $form_status = False;
 $form_error = "";
 
-extract($_POST);
+$category_name = $_POST["category_name"];
+$category_level = (int) $_POST["category_level"];
+$parent_category_id = (int) $_POST["parent_category_id"];
+$store_id = (int) $ECOM->store_id;
 
-$parent_category_id = (isEmptyString($category_name)) ? 0 : $parent_category_id;
 
 if( notEmptyString($category_name) ){
-  $ECOM->CreateCategory( $category_name, $category_level, $parent_category_id);
+  $ECOM->CreateCategory( $category_name, $category_level, $parent_category_id, $store_id);
   if( $ECOM->status() ){
     $form_status = True;
     $form_data = $ECOM->lastInsertId();

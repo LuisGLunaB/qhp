@@ -33,6 +33,11 @@ html, body{
   opacity: 1.0;
 }
 
+#ui-main input:focus{
+  border-bottom: 1px solid #1e88e5 !important;
+  box-shadow: 0 1px 0 0 #1e88e5 !important;
+}
+
 /*#ui-main{
   background-image: url("../bg.jpg");
   background-position: top center;

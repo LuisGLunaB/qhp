@@ -4,6 +4,12 @@ define("LANGUAGE","ES");
 $TRANSLATIONS["lang"]["ES"] = "es";
 $TRANSLATIONS["lang"]["EN"] = "en";
 
+$TRANSLATIONS["editar"]["ES"] = "Editar";
+$TRANSLATIONS["editar"]["EN"] = "Edit";
+
+$TRANSLATIONS["eliminar"]["ES"] = "Eliminar";
+$TRANSLATIONS["eliminar"]["EN"] = "Delete";
+
 $TRANSLATIONS["add"]["ES"] = "Agregar";
 $TRANSLATIONS["add"]["EN"] = "Add";
 
@@ -26,19 +32,22 @@ $TRANSLATIONS["tiendas"]["ES"] = "Tiendas";
 $TRANSLATIONS["tiendas"]["EN"] = "Stores";
 
 $TRANSLATIONS["ver_todos"]["ES"] = "Ver todos";
-$TRANSLATIONS["ver_todos"]["EN"] = "See All";
+$TRANSLATIONS["ver_todos"]["EN"] = "See all";
 
 $TRANSLATIONS["ver_todas"]["ES"] = "Ver todas";
-$TRANSLATIONS["ver_todas"]["EN"] = "See All";
+$TRANSLATIONS["ver_todas"]["EN"] = "See all";
 
 $TRANSLATIONS["mi_tienda"]["ES"] = "Mi Tienda";
 $TRANSLATIONS["mi_tienda"]["EN"] = "My Store";
 
-$TRANSLATIONS["nombre_de_la_tienda"]["ES"] = "Nombre de la tienda";
+$TRANSLATIONS["nombre_de_la_tienda"]["ES"] = "Nombre de la Tienda";
 $TRANSLATIONS["nombre_de_la_tienda"]["EN"] = "Store name";
 
 $TRANSLATIONS["agregar_tienda"]["ES"] = "Agregar Tienda";
 $TRANSLATIONS["agregar_tienda"]["EN"] = "Add Store";
+
+$TRANSLATIONS["nueva_tienda"]["ES"] = "Nueva Tienda";
+$TRANSLATIONS["nueva_tienda"]["EN"] = "New Store";
 
 # Categorias
 $TRANSLATIONS["categoria"]["ES"] = "Categoría";
@@ -50,29 +59,35 @@ $TRANSLATIONS["categorias"]["EN"] = "Categories";
 $TRANSLATIONS["nombre_de_la_categoria"]["ES"] = "Nombre de la Categoría";
 $TRANSLATIONS["nombre_de_la_categoria"]["EN"] = "Category name";
 
-$TRANSLATIONS["nueva_categoria"]["ES"] = "Nueva categoría";
-$TRANSLATIONS["nueva_categoria"]["EN"] = "New category";
+$TRANSLATIONS["nueva_categoria"]["ES"] = "Nueva Categoría";
+$TRANSLATIONS["nueva_categoria"]["EN"] = "New Category";
 
-$TRANSLATIONS["elegir_categoria_padre"]["ES"] = "Elegir categoría padre (opcional)";
-$TRANSLATIONS["elegir_categoria_padre"]["EN"] = "Select parent category (optional)";
+$TRANSLATIONS["elegir_categoria_padre"]["ES"] = "Elegir Categoría padre (opcional)";
+$TRANSLATIONS["elegir_categoria_padre"]["EN"] = "Select parent Category (optional)";
 
 $TRANSLATIONS["categoria_padre"]["ES"] = "Categoría Padre";
 $TRANSLATIONS["categoria_padre"]["EN"] = "Parent Category";
 
-$TRANSLATIONS["menu_de_categorias"]["ES"] = "Menú de categorías";
+$TRANSLATIONS["ninguna"]["ES"] = "Ninguna";
+$TRANSLATIONS["ninguna"]["EN"] = "None";
+
+$TRANSLATIONS["categorias_padre"]["ES"] = "Categorías Padre";
+$TRANSLATIONS["categorias_padre"]["EN"] = "Parent Categories";
+
+$TRANSLATIONS["menu_de_categorias"]["ES"] = "Menú de Categorías";
 $TRANSLATIONS["menu_de_categorias"]["EN"] = "Categories menu";
 
 $TRANSLATIONS["nivel"]["ES"] = "Nivel";
 $TRANSLATIONS["nivel"]["EN"] = "Level";
 
-$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la tienda.";
+$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la Tienda.";
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
 
-$TRANSLATIONS["mi_nueva_tienda"]["ES"] = "Mi nueva tienda";
-$TRANSLATIONS["mi_nueva_tienda"]["EN"] = "My new store";
+$TRANSLATIONS["mi_nueva_tienda"]["ES"] = "Mi nueva Tienda";
+$TRANSLATIONS["mi_nueva_tienda"]["EN"] = "My new Store";
 
 
-$TRANSLATIONS["falta_el_nombre_de_la_categoria"]["ES"] = "* Falta el nombre de la categoría.";
+$TRANSLATIONS["falta_el_nombre_de_la_categoria"]["ES"] = "* Falta el nombre de la Categoría.";
 $TRANSLATIONS["falta_el_nombre_de_la_categoria"]["EN"] = "* Category name is missing.";
 
 function TRANSLATE($key){

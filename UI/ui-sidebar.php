@@ -2,10 +2,15 @@
 <div id="ui-sidebar">
 
   <div id="store-menu" class="ui-sidebar-item waves-effect">
-    <a href="index.php">
+    <a class="ui-sidebar-button" href="javascript:{}">
       <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/store-icon.fw.png" alt="">
       <div class="ui-sidetext"> <?php pTRANSLATE("tiendas"); ?> </div>
     </a>
+
+    <div class="ui-sidebar-subitems" style="display: none;">
+      <a href="stores.php"><?php pTRANSLATE("ver_todas"); ?></a>
+      <a href="create_store.php"><?php pTRANSLATE("nueva_tienda"); ?></a>
+    </div>
   </div>
 
   <div id="category-menu" class="ui-sidebar-item waves-effect">
@@ -24,14 +29,17 @@
 
 <script type="text/javascript">
   menu_array = ["store-menu","category-menu"]; //Cookie name = id #name
-  for (var i in menu_array) { InitialHideOrShow( menu_array[i] ); }
+  for (var i in menu_array) {
+    InitialHideOrShow( menu_array[i] );
+  }
 
   $ui_sidebar = $("#ui-sidebar");
-  $category_menu_button = $("#category-menu .ui-sidebar-button", $ui_sidebar);
-  $category_menu_subitems = $("#category-menu .ui-sidebar-subitems", $ui_sidebar);
+  $sidebar_buttons = $(".ui-sidebar-button", $ui_sidebar);
 
-  $category_menu_button.click(function(){
-    HideOrShowAndCookie( $category_menu_subitems , "category-menu" );
+  $sidebar_buttons.click( function(){
+    $clicked_item = $(this).parent();
+    $clicked_s_subitems = $( ".ui-sidebar-subitems", $clicked_item );
+    HideOrShowAndCookie( $clicked_s_subitems , $clicked_item.attr('id') );
   });
 
   function InitialHideOrShow(cookie_name){

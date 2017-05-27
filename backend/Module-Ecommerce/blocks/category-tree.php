@@ -96,15 +96,41 @@
   <?php ECOMMERCE::ShowTree( $ECOM->ReadCategoryBranches() ); ?>
 </div>
 
-<!-- tree-branch branch-id-5 parent-branch-0 branch-level-1 -->
-
 
 <script src="<?php echo $ROOT;?>/UI/ui-treemenu.js"></script>
 <script type="text/javascript">
-  function AlertCategoryId(category_id, category_name, category_level, parent_category_id, category_url, store_id){
-    // alert(category_id+"-"+category_name+"("+category_level+")");
+  function CreateCategoryUI(category_id, category_name, category_level, parent_category_id, category_url, store_id){
+    $("#category_level_count").html(category_level+1);
+    $("#category_level").val(category_level+1);
+    $("#parent_category_id").val( category_id );
+
+    $("#parent_categories_list").html( CategoryLink(category_id) );
   }
-  var Treemenu_Onclick = AlertCategoryId;
+
+  function ClearCreateCategory(){
+    $("#category_level_count").html( 1 );
+    $("#category_level").val( 1 );
+    $("#parent_category_id").val( 0 );
+
+    $("#parent_categories_list").html( TRANSLATE("ninguna") );
+    Treemenu_HideAllBranches();
+  }
+
+  function CategoryLink(branch_id,destination="#"){
+    $category = $(".branch-id-"+branch_id);
+
+    id = $category.data( "category_id" );
+    name = $category.data( "category_name" );
+    level = $category.data( "category_level" );
+    parent = $category.data( "parent_category_id" );
+    url = $category.data( "category_url" );
+    store = $category.data( "store_id" );
+
+    anchor_text = ( TRANSLATE("nivel") + " " + level + " - " + name );
+    a = '<a class="CategoryLink" onclick="ClearCreateCategory();" data-category_id="'+id+'" href="javascript:{}">'+anchor_text+'</a>';
+    return a;
+  }
+  var Treemenu_Onclick = CreateCategoryUI;
 
   $CategoryTree1 = $("#CategoryTree1");
   Treemenu_HideAllBranches($CategoryTree1);

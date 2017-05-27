@@ -12,6 +12,9 @@ form label{
   font-weight: 700;
   font-size: 13px;
   color: black !important;
+  margin-top: 3px;
+  margin-bottom: -4px;
+  display: inline-block;
 }
 form input, form select, form textarea{
   border-radius: 3px !important;
