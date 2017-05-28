@@ -1,3 +1,6 @@
+<?php include_once( ROOT . "/UI/ui-form-functions.php"); ?>
+<?php include_once( ROOT . "/UI/ui-toasts.php"); ?>
+
 <div id="ui-header">
 
   <div class="left-align" style="display: inline-block; float: left;">

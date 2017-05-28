@@ -2,15 +2,15 @@
 <div id="ui-sidebar">
 
   <div id="store-menu" class="ui-sidebar-item waves-effect">
-    <a class="ui-sidebar-button" href="javascript:{}">
+    <a class="ui-sidebar-button" href="stores.php">
       <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/store-icon.fw.png" alt="">
       <div class="ui-sidetext"> <?php pTRANSLATE("tiendas"); ?> </div>
     </a>
 
-    <div class="ui-sidebar-subitems" style="display: none;">
+    <!-- <div class="ui-sidebar-subitems" style="display: none;">
       <a href="stores.php"><?php pTRANSLATE("ver_todas"); ?></a>
       <a href="create_store.php"><?php pTRANSLATE("nueva_tienda"); ?></a>
-    </div>
+    </div> -->
   </div>
 
   <div id="category-menu" class="ui-sidebar-item waves-effect">

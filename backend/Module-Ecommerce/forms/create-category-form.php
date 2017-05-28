@@ -28,7 +28,7 @@
     <input type="hidden" id="parent_category_id" name="parent_category_id" value="0">
 
 
-    <div class="form-error"><?php showFormError(); ?></div>
+    <div class="form-error"><?php UI_ShowFormError(); ?></div>
 
     <div class="ui-form-buttons">
         <a href="javascript:{}"

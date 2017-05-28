@@ -78,22 +78,6 @@ class DISPLAY{
   }
 }
 
-function showFormError($form_error=NULL){
-  if(is_null($form_error)){
-    if( array_key_exists( "form_error", $GLOBALS) ){
-      echo $GLOBALS["form_error"];
-    }else{
-      // NULL was given, no form has been called.
-    }
-  }else{
-    if($form_error != ""){
-      echo $form_error;
-    }else{
-      // There is was no error with the form.
-    }
-  }
-}
-
 function array_sort($array, $on, $order=SORT_ASC){
 
     $new_array = array();

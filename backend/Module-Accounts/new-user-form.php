@@ -8,7 +8,7 @@
   <input type="password" name="password" value="" placeholder="Contraseña">
   <input type="password" name="password_verification" value="" placeholder="Repetir Contraseña">
 
-  <div class="form-error"><?php showFormError(); ?></div>
+  <div class="form-error"><?php UI_ShowFormError(); ?></div>
 
   <input type="submit" name="submit" value="Crear Cuenta">
 

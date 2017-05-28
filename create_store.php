@@ -5,36 +5,25 @@ include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 $error_message = "";
 if( $SQLConnection->status() ){
 
-  $tiendas_AS = TRANSLATE("tiendas");
-  $editar_AS = TRANSLATE("editar");
-  $eliminar_AS = TRANSLATE("eliminar");
+    # Create Store
+    if( was_form_submitted("create-store-form") ){
+      /* Eviroment: $form_data, $form_status, $form_error */
+      include_once( ECOMMERCE_ROUTE_processes . "create-store.php" );
+      if($form_status){
+        header("Location: stores.php?process=create-store&status=1&form_data=$form_data");
+      }
+    }
 
-  $store_list_query =
-  "SELECT
-    store_name AS '$tiendas_AS',
-    LINK( CONCAT('update_store.php?store_id=',store_id),'$editar_AS','action') AS '$editar_AS',
-    LINK( CONCAT('delete_store.php?store_id=',store_id),'$eliminar_AS','action') AS '$eliminar_AS'
-   FROM
-    stores
-   ORDER BY
-    store_name ASC
-   ;
-  ";
-
-  $SQL = new SQLObject();
-  $store_list = $SQL->QUERY( $store_list_query );
-}else{
+  }else{
 	$error_message = $SQLConnection->message();
 }
 
 # UI Navegation:
-$SectionTitle = "tiendas";
+$SectionTitle = "nueva_tienda";
 $BreadCrumbs = [
   ["index.php","mi_tienda"]
 ];
-$MenuButtons = [
-  ["create_store.php","add"]
-];
+$MenuButtons = [];
 ?>
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"
@@ -53,13 +42,17 @@ xmlns="http://www.w3.org/1999/xhtml">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content medium row left-align" >
-
-        <?php
-          DISPLAY::asTable( $store_list, "ui-table");
-        ?>
-
+      <div class="ui-content small row left-align" >
+        <!-- <div class="ui-tabs">
+          <a href="#" class="ui-tab selected">Información</a>
+          <a href="#" class="ui-tab">Categoria</a>
+          <a href="#" class="ui-tab ">Precios</a>
+          <a href="#" class="ui-tab ">Tamaños</a>
+          <a href="#" class="ui-tab ">Precios</a>
+        </div> -->
+        <?php include_once( ECOMMERCE_ROUTE_forms. "create-store-form.php"); ?>
       </div>
+
   </div>
   <?php include_once("$ROOT/UI/javascripts.php"); ?>
 </body>

@@ -19,6 +19,9 @@ $TRANSLATIONS["search"]["EN"] = "Search";
 $TRANSLATIONS["guardar"]["ES"] = "Guardar";
 $TRANSLATIONS["guardar"]["EN"] = "Save";
 
+$TRANSLATIONS["guardar_cambios"]["ES"] = "Guardar cambios";
+$TRANSLATIONS["guardar_cambios"]["EN"] = "Save changes";
+
 $TRANSLATIONS["agregar"]["ES"] = "Agregar";
 $TRANSLATIONS["agregar"]["EN"] = "Add";
 
@@ -48,6 +51,17 @@ $TRANSLATIONS["agregar_tienda"]["EN"] = "Add Store";
 
 $TRANSLATIONS["nueva_tienda"]["ES"] = "Nueva Tienda";
 $TRANSLATIONS["nueva_tienda"]["EN"] = "New Store";
+
+$TRANSLATIONS["editar_tienda"]["ES"] = "Editar Tienda";
+$TRANSLATIONS["editar_tienda"]["EN"] = "Edit Store";
+
+
+## TOAST
+$TRANSLATIONS["create-store-toast"]["ES"] = "Tienda Creada con éxito.";
+$TRANSLATIONS["create-store-toast"]["EN"] = "Store Created successfully.";
+
+$TRANSLATIONS["update-store-toast"]["ES"] = "Tienda Actualizada con éxito.";
+$TRANSLATIONS["update-store-toast"]["EN"] = "Store Updated successfully.";
 
 # Categorias
 $TRANSLATIONS["categoria"]["ES"] = "Categoría";

@@ -38,6 +38,18 @@ html, body{
   box-shadow: 0 1px 0 0 #1e88e5 !important;
 }
 
+#toast-container{
+  top: 5% !important;
+  right: 3% !important;
+}
+.ui-toast{
+  background-color: rgba(10, 40, 65, 0.8);
+  color: white;
+  font-weight: 400;
+  border-radius: 10px;
+  display: inline-block;
+}
+
 /*#ui-main{
   background-image: url("../bg.jpg");
   background-position: top center;

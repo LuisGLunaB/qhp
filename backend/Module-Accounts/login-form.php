@@ -6,7 +6,7 @@
   <!-- <input id="email" type="text" name="email" value="" placeholder="Email"> -->
   <input type="password" name="password" value="" placeholder="Contraseña">
 
-  <div class="form-error"><?php showFormError(); ?></div>
+  <div class="form-error"><?php UI_ShowFormError(); ?></div>
 
   <input type="submit" name="submit" value="Entrar">
 
