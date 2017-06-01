@@ -1,16 +1,13 @@
 <?php
-/* Eviroment: $ECOM, $SQLConnection, $con & defined(ECOMMERCE_ROUTES) */
 include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
 $error_message = "";
 if( $SQLConnection->status() ){
-
-    # Create Store
-    if( was_form_submitted("create-category-form") ){
-      /* Eviroment: $form_data, $form_status, $form_error */
-      include_once( ECOMMERCE_ROUTE_processes . "create-category.php" );
+    # Delete Category
+    if( was_form_submitted("delete-category-form") ){
+      include_once( ECOMMERCE_ROUTE_processes . "delete-category.php" );
       if($form_status){
-        header("Location: categories.php?process=create-category&lastid=$form_data&status=1");
+        header("Location: categories.php?process=delete-category&status=1&form_data=$form_data");
       }
     }
 
@@ -19,7 +16,7 @@ if( $SQLConnection->status() ){
 }
 
 # UI Navegation:
-$SectionTitle = "nueva_categoria";
+$SectionTitle = "eliminar_categoria";
 $BreadCrumbs = [
   ["index.php","mi_tienda"],
   ["categories.php","categorias"]
@@ -42,20 +39,12 @@ xmlns="http://www.w3.org/1999/xhtml">
 <body onresize="" onload="">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
-
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content medium row left-align" >
-        <div class="row">
-            <div class="col s6 m6 l6">
-              <?php include_once( ECOMMERCE_ROUTE_blocks. "category-tree.php"); ?>
-            </div>
-            <div class="col s6 m6 l6">
-              <?php include_once( ECOMMERCE_ROUTE_forms. "create-category-form.php"); ?>
-            </div>
-        </div>
+      <div class="ui-content small row left-align" >
+
+          <?php include_once( ECOMMERCE_ROUTE_forms. "delete-category-form.php"); ?>
 
       </div>
-
   </div>
   <?php include_once("$ROOT/UI/javascripts.php"); ?>
 </body>

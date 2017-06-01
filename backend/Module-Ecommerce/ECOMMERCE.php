@@ -1,9 +1,46 @@
 <?php
 class ECOMMERCE extends SQLObject{
   public $store_id = 1;
+  public $user_level = 5;//0=notLogged,1=StoreVisitor/User,2=Manager,3=Owner,4=Admin,5=SuperAdmin
+
   protected $category_fields = ["category_id","category_name","store_id","category_level",
     "parent_category_id","category_url"];
-  # Store functions
+  public function getStoreId($method_store_id=NULL){
+      if( ! is_null( $method_store_id ) ){
+        return $method_store_id;
+      }else{
+        $instance_store_id = $this->store_id;
+        return $instance_store_id;
+      }
+    }
+
+  public function isStoreManager($store_id=NULL){
+    return ( $this->hasStorePermissions($store_id) and $this->hasOwnerLevel() );
+  }
+  public function isStoreOwner($store_id=NULL){
+    return ( $this->hasStorePermissions($store_id) and $this->hasOwnerLevel() );
+  }
+  public function hasStorePermissions($store_id=NULL){
+    $store_id = $this->getStoreId($store_id);
+    return ( $this->store_id==$store_id );
+  }
+  public function hasUserLevel($required_user_level=1){
+    return ($this->user_level >= $required_user_level);
+  }
+  public function hasManagerLevel(){
+    return $this->hasUserLevel(2);
+  }
+  public function hasOwnerLevel(){
+    return $this->hasUserLevel(3);
+  }
+  public function hasAdminLevel(){
+    return $this->hasUserLevel(4);
+  }
+  public function hasSuperAdminLevel(){
+    return $this->hasUserLevel(5);
+  }
+
+  # STORE functions
   public function CreateStore($store_name){
     $binds[":store_name"] = $store_name;
     $binds[":store_url"] = self::string_to_url($store_name);
@@ -34,7 +71,9 @@ class ECOMMERCE extends SQLObject{
 
     return $this->VariableOrErrorvalue( $data[0] );
   }
-  public function UpdateStoreName( $store_id, $new_store_name ){
+  public function UpdateStoreName( $new_store_name, $store_id=NULL ){
+    $store_id = $this->getStoreId( $store_id );
+
     $binds[":new_store_name"] = $new_store_name;
     $binds[":new_store_url"] = self::string_to_url($new_store_name);
     $binds[":store_id"] = (int) $store_id;
@@ -62,8 +101,10 @@ class ECOMMERCE extends SQLObject{
     return $this->status();
   }
 
+  # CATEGORY functions
   public function CreateCategory($category_name,$category_level=1,$parent_category_id=0,$store_id=NULL){
-    $store_id = (is_null($store_id)) ? $this->store_id : $store_id;
+    $store_id = $this->getStoreId($store_id);
+
     $parent_category_id = ($category_level==1) ? 0 : $parent_category_id;
     $category_level = ($category_level<1) ? 1 : $category_level;
 
@@ -83,7 +124,8 @@ class ECOMMERCE extends SQLObject{
     return $this->VariableOrErrorvalue( $this->lastInsertId() );
   }
   public function ReadCategoriesAll($parent_category_id=0,$max_level=NULL,$level=1,$ORDERBY="ASC",$store_id=NULL){
-    $store_id = ( is_null($store_id) ) ? $this->store_id : $store_id;
+    $store_id = $this->getStoreId($store_id);
+
     $db_max_level = $this->ReadCategoriesMaxLevel($store_id);
     $max_level = ( is_null($max_level) ) ? $db_max_level : $max_level;
     $max_level = min($db_max_level,$max_level);
@@ -167,7 +209,7 @@ class ECOMMERCE extends SQLObject{
       $binds[":parent_category_id"] = (int) $category_id;
       $category_fields = implode(",",$this->category_fields);
 
-      $data = $this->QUERY(
+      $ChildrenTable = $this->QUERY(
       "SELECT
         $category_fields
        FROM
@@ -178,10 +220,10 @@ class ECOMMERCE extends SQLObject{
       ORDER BY
         category_name $ORDERBY;
       ", $binds);
-      if( sizeof($data)!=0 ){
-        return $this->VariableOrErrorvalue( $data );
+      if( sizeof($ChildrenTable)!=0 ){
+        return $this->VariableOrErrorvalue( $ChildrenTable , []);
       }else{
-        return NULL;
+        return [];
       }
 
     }else{
@@ -189,8 +231,22 @@ class ECOMMERCE extends SQLObject{
     }
 
   }
-  public function ReadCategoriesMaxLevel($store_id){
-    $store_id = (is_null($store_id)) ? $this->store_id : $store_id;
+  public function ReadCategoryAllChildrenCount($category_id){
+    $count = 0;
+    $direct_children = $this->ReadCategoryChildren($category_id);
+    foreach( $direct_children as $direct_child ){
+      $count++;
+      $count +=  $this->ReadCategoryAllChildrenCount( $direct_child["category_id"] );
+    }
+    return $count;
+  }
+  public function ReadCategoryChildrenCount($category_id=0){
+    $children_count = sizeof( $this->ReadCategoryChildren($category_id) ) ;
+    return $children_count;
+  }
+
+  public function ReadCategoriesMaxLevel($store_id=NULL){
+    $store_id = $this->getStoreId($store_id);
     $store_id = (int) $store_id;
 
     $data = $this->QUERY(
@@ -208,10 +264,9 @@ class ECOMMERCE extends SQLObject{
     while($keepLooping){
       $CurrentCategoryRow = $this->ReadCategory($category_id);
       array_unshift($Parents, $CurrentCategoryRow);
-      // $Parents[] = $CurrentCategoryRow;
       $category_id = $CurrentCategoryRow["parent_category_id"];
 
-      $keepLooping = (! ($category_id==0 or is_null($category_id)) );
+      $keepLooping = (! ($category_id==0 or is_null($category_id) or sizeof($category_id)==0 ) );
     }
     return $Parents;
   }
@@ -247,7 +302,6 @@ class ECOMMERCE extends SQLObject{
       return $this->ReadCategoryField($category_id,"category_level");
     }
   }
-
   public function ReadCategoryBranches($id=0,$ORDERBY="ASC",$store_id=NULL){
     $data = $this->ReadCategoryChildren($id ,$ORDERBY,$store_id);
 
@@ -261,7 +315,32 @@ class ECOMMERCE extends SQLObject{
 
     return $data; //$data = NULL if no children found.
   }
+  public function UpdateCategoryName( $category_id, $category_name ){
 
+    $binds[":category_id"] = $category_id;
+    $binds[":category_name"] = $category_name;
+    $binds[":category_url"] = self::string_to_url($category_name);
+
+    $this->QUERY(
+     "UPDATE
+        categories
+      SET
+        category_name = :category_name,
+        category_url = :category_url
+      WHERE
+        category_id = :category_id;
+     ", $binds );
+
+    return $this->status();
+  }
+  public function ShowCategoryParents( $category_id ){
+    $parents_span = "";
+    $category_parents =  $this->ReadCategoryParents( $category_id ) ;
+    foreach($category_parents as $parent){
+      $parents_span .= "<span>".TRANSLATE("nivel"). " $parent[category_level] - $parent[category_name] </span> <br>";
+    }
+    return $parents_span;
+  }
   public static function ShowTree($data,$level=1,$children_field="children"){
     if( sizeof($data)>0 and !is_null($data) ){
       foreach($data as $index => $row){
@@ -273,7 +352,6 @@ class ECOMMERCE extends SQLObject{
       }
     }
   }
-
   public static function ShowTreeBranch($branch){
     // $branch is an associative array of 1 row of data.
     $b = $branch;
@@ -283,6 +361,51 @@ class ECOMMERCE extends SQLObject{
       <a class='waves-effect' href='javascript:{}'>$b[category_name]</a>
     </div>
     ";
+  }
+
+  public static function CategoryTableRow2Links($table,$glue = " > "){
+    $links_array = [];
+
+    foreach($table as $row){
+      $id = $row["category_id"];
+      $name = $row["category_name"];
+      if( !is_null($name) ){
+        $links_array[] =
+        "<a href='javascript:{}' data-category_id='$id' data-category_name='$name'>$name</a>";
+      }
+    }
+
+    return implode( $glue, $links_array );
+  }
+  public static function CategoryRow2CategoryTable($row){
+    $max_level = self::CategoryRowGetLevel($row);
+    $category_table = [];
+    for ($level=1;$level<=$max_level; $level++){
+      $category_table[] = self::CategoryRow2CategoryAssocAtLevel($row,$level);
+    }
+    return $category_table;
+  }
+  public static function CategoryRow2CategoryAssocAtLevel($row,$level=1){
+    $i = $level;
+    if( array_key_exists("c$i"."_category_id",$row) ){
+      $id = $row["c$i"."_category_id"];
+      $name = $row["c$i"."_category_name"];
+      return array( "category_id"=>$id, "category_name"=>$name );
+    }else {
+      return "";
+    }
+  }
+  public static function CategoryRowGetLevel($row){
+    $i = 1;
+    while(True){
+      if( array_key_exists("c$i"."_category_id",$row) ){
+        $i++;
+      }else {
+        $i--;
+        break;
+      }
+    }
+    return $i;
   }
 
   public static function Associative2DataAttributes($Assoc){

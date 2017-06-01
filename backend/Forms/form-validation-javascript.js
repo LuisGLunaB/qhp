@@ -1,3 +1,4 @@
+
   function notEmptyFormValue(name,Form){
     return (! isEmptyFormValue(name,Form) );
   }

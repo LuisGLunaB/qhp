@@ -55,6 +55,8 @@ $TRANSLATIONS["nueva_tienda"]["EN"] = "New Store";
 $TRANSLATIONS["editar_tienda"]["ES"] = "Editar Tienda";
 $TRANSLATIONS["editar_tienda"]["EN"] = "Edit Store";
 
+$TRANSLATIONS["eliminar_tienda"]["ES"] = "Eliminar Tienda";
+$TRANSLATIONS["eliminar_tienda"]["EN"] = "Delete Store";
 
 ## TOAST
 $TRANSLATIONS["create-store-toast"]["ES"] = "Tienda Creada con éxito.";
@@ -63,12 +65,27 @@ $TRANSLATIONS["create-store-toast"]["EN"] = "Store Created successfully.";
 $TRANSLATIONS["update-store-toast"]["ES"] = "Tienda Actualizada con éxito.";
 $TRANSLATIONS["update-store-toast"]["EN"] = "Store Updated successfully.";
 
+$TRANSLATIONS["delete-store-toast"]["ES"] = "Tienda Eliminada con éxito.";
+$TRANSLATIONS["delete-store-toast"]["EN"] = "Store Deleted successfully.";
+
+$TRANSLATIONS["delete-category-toast"]["ES"] = "Categoría Eliminada con éxito.";
+$TRANSLATIONS["delete-category-toast"]["EN"] = "Category Deleted successfully.";
+
+$TRANSLATIONS["update-category-toast"]["ES"] = "Categoría Actualizada con éxito.";
+$TRANSLATIONS["update-category-toast"]["EN"] = "Category Updated successfully.";
+
 # Categorias
 $TRANSLATIONS["categoria"]["ES"] = "Categoría";
 $TRANSLATIONS["categoria"]["EN"] = "Category";
 
 $TRANSLATIONS["categorias"]["ES"] = "Categorías";
 $TRANSLATIONS["categorias"]["EN"] = "Categories";
+
+$TRANSLATIONS["editar_categoria"]["ES"] = "Editar Categoría";
+$TRANSLATIONS["editar_categoria"]["EN"] = "Edit Category";
+
+$TRANSLATIONS["eliminar_categoria"]["ES"] = "Eliminar Categoría";
+$TRANSLATIONS["eliminar_categoria"]["EN"] = "Delete Category";
 
 $TRANSLATIONS["nombre_de_la_categoria"]["ES"] = "Nombre de la Categoría";
 $TRANSLATIONS["nombre_de_la_categoria"]["EN"] = "Category name";
@@ -94,15 +111,32 @@ $TRANSLATIONS["menu_de_categorias"]["EN"] = "Categories menu";
 $TRANSLATIONS["nivel"]["ES"] = "Nivel";
 $TRANSLATIONS["nivel"]["EN"] = "Level";
 
-$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la Tienda.";
-$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
 
 $TRANSLATIONS["mi_nueva_tienda"]["ES"] = "Mi nueva Tienda";
 $TRANSLATIONS["mi_nueva_tienda"]["EN"] = "My new Store";
 
+$TRANSLATIONS["seguro_que_quieres_borrar_esta_tienda"]["ES"] = "¿Seguro que quieres Eliminar esta Tienda de manera permanente?";
+$TRANSLATIONS["seguro_que_quieres_borrar_esta_tienda"]["EN"] = "Are you sure you want to permanently Delete this Store?";
 
+$TRANSLATIONS["seguro_que_quieres_borrar_esta_categoria"]["ES"] = "¿Seguro que quieres Eliminar esta Categoría de manera permanente?";
+$TRANSLATIONS["seguro_que_quieres_borrar_esta_categoria"]["EN"] = "Are you sure you want to permanently Delete this Category?";
+
+$TRANSLATIONS["no_tienes_permisos_para_realizar_esta_accion"]["ES"] = "* No tienes permisos para realizar esta Acción.";
+$TRANSLATIONS["no_tienes_permisos_para_realizar_esta_accion"]["EN"] = "* You don not have permissions to execute this Task.";
+
+$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la Tienda.";
+$TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
 $TRANSLATIONS["falta_el_nombre_de_la_categoria"]["ES"] = "* Falta el nombre de la Categoría.";
 $TRANSLATIONS["falta_el_nombre_de_la_categoria"]["EN"] = "* Category name is missing.";
+
+$TRANSLATIONS["estas_por_borrar_1_categoria_y"]["ES"] = "Estás a punto de Eliminar 1 Categoría y";
+$TRANSLATIONS["estas_por_borrar_1_categoria_y"]["EN"] = "You are about to Delete 1 Category and";
+
+$TRANSLATIONS["de_sus_subcategorias"]["ES"] = "de sus Subcategorías";
+$TRANSLATIONS["de_sus_subcategorias"]["EN"] = "of its Subcategories";
+
+$TRANSLATIONS["estas_seguro"]["ES"] = "¿Estás seguro?";
+$TRANSLATIONS["estas_seguro"]["EN"] = "Are you sure?";
 
 function TRANSLATE($key){
   if( defined("LANGUAGE") ){

@@ -45,6 +45,10 @@ form .form-error{
 form select{
   border: 1px solid #cccccc;
 }
+form span{
+  font-weight: 400;
+  padding: 3px;
+}
 
 @media screen and (max-width:992px) {
 }

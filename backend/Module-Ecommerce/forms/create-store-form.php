@@ -5,14 +5,7 @@
     <input type="text" name="store_name" id="store_name" value="" placeholder="<?php pTRANSLATE("mi_nueva_tienda"); ?>">
 
     <div class="form-error"><?php UI_ShowFormError(); ?></div>
-
-    <div class="ui-form-buttons">
-        <a href="javascript:{}"
-          data-position="bottom" data-delay="1" data-tooltip="<?php pTRANSLATE("agregar"); ?>"
-          class="save-button btn-floating btn-small tooltipped waves-effect waves-light blue darken-1">
-          <i class="material-icons">add</i>
-        </a>
-    </div>
+    <?php echo UI_FormAddButton(); ?>
 
 </form>
 

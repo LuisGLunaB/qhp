@@ -3,7 +3,6 @@ include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
 $error_message = "";
 if( $SQLConnection->status() ){
-
     # Update Store
     if( was_form_submitted("update-store-form") ){
       include_once( ECOMMERCE_ROUTE_processes . "update-store.php" );
@@ -43,7 +42,7 @@ xmlns="http://www.w3.org/1999/xhtml">
       <div class="ui-content small row left-align" >
 
           <?php include_once( ECOMMERCE_ROUTE_forms. "update-store-form.php"); ?>
-          
+
       </div>
   </div>
   <?php include_once("$ROOT/UI/javascripts.php"); ?>

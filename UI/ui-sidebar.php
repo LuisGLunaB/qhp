@@ -14,15 +14,15 @@
   </div>
 
   <div id="category-menu" class="ui-sidebar-item waves-effect">
-      <a class="ui-sidebar-button" href="javascript:{}">
+      <a class="ui-sidebar-button" href="categories.php">
         <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/categories-icon.fw.png" alt="">
         <div class="ui-sidetext"> <?php pTRANSLATE("categorias"); ?> </div>
       </a>
 
-      <div class="ui-sidebar-subitems" style="display: none;">
+      <!-- <div class="ui-sidebar-subitems" style="display: none;">
         <a href="categories.php"><?php pTRANSLATE("ver_todas"); ?></a>
         <a href="create_category.php"><?php pTRANSLATE("nueva_categoria"); ?></a>
-      </div>
+      </div> -->
   </div>
 
 </div>

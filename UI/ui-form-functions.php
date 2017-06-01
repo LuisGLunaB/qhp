@@ -13,10 +13,16 @@
     ';
   }
 
+
+  function UI_FormAddButton($class="save-button"){
+    return UI_FormButton("agregar","add",$class);
+  }
   function UI_FormEditButton($class="save-button"){
     return UI_FormButton("guardar_cambios","mode_edit",$class);
   }
-
+  function UI_FormDeleteButton($class="save-button"){
+    return UI_FormButton("eliminar","delete",$class);
+  }
   function UI_ShowFormError($form_error=NULL){
     if(is_null($form_error)){
       if( array_key_exists( "form_error", $GLOBALS) ){
@@ -33,4 +39,14 @@
     }
   }
 
+
+  function DumpFormValues($assoc,$form=""){
+    foreach($assoc as $name=>$value){
+      SetFormValue($name,$value,$form);
+    }
+  }
+  function SetFormValue($name,$value,$form=""){
+    $form = ($form=="") ? "" : ", $form";
+    echo "$('*[name=$name]' $form ).val('$value');";
+  }
 ?>

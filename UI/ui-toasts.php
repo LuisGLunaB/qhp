@@ -17,11 +17,15 @@
   }
   function showToast($toast){
     $toastMessage = getToastMessage($toast);
-    $rand = rand(0,1000);
+    $toastDuration = 3000;
+    $wait = 400;
+    $x = rand(0,10000); //Random variable names so Toasts don't overwrite.
     echo '
       <script>
-        var $toastContent'.$rand.' = $("<span>'.$toastMessage.'</span>");
-        Materialize.toast($toastContent'.$rand.', 3000, "ui-toast");
+        var $toastContent'.$x.' = $("<span>'.$toastMessage.'</span>");
+        setTimeout(function(){
+            Materialize.toast($toastContent'.$x.', '.$toastDuration.', "ui-toast");
+        }, '.$wait.');
       </script>
     ';
     // create-store

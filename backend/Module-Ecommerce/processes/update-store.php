@@ -5,15 +5,16 @@ $form_data = NULL;
 $form_status = False;
 $form_error = "";
 
+$store_id = (int) $_POST["store_id"];
 $store_name = $_POST["store_name"];
 
 if( notEmptyString($store_name) ){
-  if( $ECOM->hasAdminLevel() ){
+  if( $ECOM->isStoreOwner($store_id) or $ECOM->hasAdminLevel() ){
 
-    $ECOM->CreateStore( $store_name );
-    if( $ECOM->status() ){
+    $success = $ECOM->UpdateStoreName( $store_name, $store_id );
+    if( $success ){
       $form_status = True;
-      $form_data = $ECOM->lastInsertId();
+      $form_data = $store_id;
     }else{
       $form_error = $ECOM->message();
     }
