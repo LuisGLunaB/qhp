@@ -42,7 +42,7 @@ xmlns="http://www.w3.org/1999/xhtml">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content small row left-align" >
+      <div class="ui-content small row left-align protected-section" >
         <!-- <div class="ui-tabs">
           <a href="#" class="ui-tab selected">Información</a>
           <a href="#" class="ui-tab">Categoria</a>

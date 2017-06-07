@@ -75,8 +75,8 @@ xmlns="http://www.w3.org/1999/xhtml">
           <thead>
             <tr>
               <th><?php pTRANSLATE("categorias"); ?></th>
-              <th><?php pTRANSLATE("editar"); ?></th>
-              <th class="editar"><?php pTRANSLATE("eliminar"); ?></th>
+              <th class=""><?php pTRANSLATE("editar"); ?></th>
+              <th class="editar protected-section"><?php pTRANSLATE("eliminar"); ?></th>
             </tr>
           </thead>
 
@@ -90,7 +90,7 @@ xmlns="http://www.w3.org/1999/xhtml">
               <tr>
                 <td class='category-description'>$category_links</td>
                 <td class='edit'> <a href='javascript:{}'>".TRANSLATE("editar")."</a> </td>
-                <td class='delete'> <a href='javascript:{}'>".TRANSLATE("eliminar")."</a> </td>
+                <td class='delete protected-section'> <a href='javascript:{}'>".TRANSLATE("eliminar")."</a> </td>
               </tr>";
             }
             ?>

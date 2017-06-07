@@ -1,7 +1,7 @@
 
 <div id="ui-sidebar">
 
-  <div id="store-menu" class="ui-sidebar-item waves-effect">
+  <div id="store-menu" class="ui-sidebar-item waves-effect protected-section">
     <a class="ui-sidebar-button" href="stores.php">
       <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/store-icon.fw.png" alt="">
       <div class="ui-sidetext"> <?php pTRANSLATE("tiendas"); ?> </div>

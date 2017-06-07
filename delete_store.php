@@ -3,6 +3,8 @@ include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
 $error_message = "";
 if( $SQLConnection->status() ){
+    $ECOM->SecureProtectedSection();
+    $ECOM->SecureSuperProtectedSection();
     # Delete Store
     if( was_form_submitted("delete-store-form") ){
       include_once( ECOMMERCE_ROUTE_processes . "delete-store.php" );
@@ -39,7 +41,7 @@ xmlns="http://www.w3.org/1999/xhtml">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content small row left-align" >
+      <div class="ui-content small row left-align protected-section" >
 
           <?php include_once( ECOMMERCE_ROUTE_forms. "delete-store-form.php"); ?>
 

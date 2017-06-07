@@ -74,6 +74,18 @@ $TRANSLATIONS["delete-category-toast"]["EN"] = "Category Deleted successfully.";
 $TRANSLATIONS["update-category-toast"]["ES"] = "Categoría Actualizada con éxito.";
 $TRANSLATIONS["update-category-toast"]["EN"] = "Category Updated successfully.";
 
+$TRANSLATIONS["super-protected-section-toast"]["ES"] = "Accesso nivel sistema Negado.";
+$TRANSLATIONS["super-protected-section-toast"]["EN"] = "System level Access Denied.";
+
+$TRANSLATIONS["protected-section-toast"]["ES"] = "No tienes accesso a secciones Protegidas.";
+$TRANSLATIONS["protected-section-toast"]["EN"] = "You do not have access no Protected sections.";
+
+$TRANSLATIONS["status-false-toast"]["ES"] = "Error al realizar la última operación.";
+$TRANSLATIONS["status-false-toast"]["EN"] = "There was an error on the last request.";
+
+$TRANSLATIONS["no-status-toast"]["ES"] = "No se devolvió el estado de la operación.";
+$TRANSLATIONS["no-status-toast"]["EN"] = "No status was sent from the last request.";
+
 # Categorias
 $TRANSLATIONS["categoria"]["ES"] = "Categoría";
 $TRANSLATIONS["categoria"]["EN"] = "Category";
@@ -110,7 +122,6 @@ $TRANSLATIONS["menu_de_categorias"]["EN"] = "Categories menu";
 
 $TRANSLATIONS["nivel"]["ES"] = "Nivel";
 $TRANSLATIONS["nivel"]["EN"] = "Level";
-
 
 $TRANSLATIONS["mi_nueva_tienda"]["ES"] = "Mi nueva Tienda";
 $TRANSLATIONS["mi_nueva_tienda"]["EN"] = "My new Store";

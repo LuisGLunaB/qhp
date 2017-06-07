@@ -1,7 +1,7 @@
 <?php
 class ECOMMERCE extends SQLObject{
   public $store_id = 1;
-  public $user_level = 5;//0=notLogged,1=StoreVisitor/User,2=Manager,3=Owner,4=Admin,5=SuperAdmin
+  public $user_level = 4;//0=notLogged,1=StoreVisitor/User,2=Manager,3=Owner,4=Admin,5=SuperAdmin
 
   protected $category_fields = ["category_id","category_name","store_id","category_level",
     "parent_category_id","category_url"];
@@ -38,6 +38,24 @@ class ECOMMERCE extends SQLObject{
   }
   public function hasSuperAdminLevel(){
     return $this->hasUserLevel(5);
+  }
+
+  public function SecureProtectedSection(){
+    if( $this->hasAccessToProtectedSections() ){
+      // Access Granted
+    }else{
+      header("Location: index.php?process=super-protected-section&status=1");
+    }
+  }
+  public function SecureSuperProtectedSection(){
+    if( $this->hasSuperAdminLevel() ){
+      // Access Granted
+    }else{
+      header("Location: index.php?process=super-protected-section&status=1");
+    }
+  }
+  public function hasAccessToProtectedSections(){
+    return ($this->isStoreOwner() or $this->hasAdminLevel());
   }
 
   # STORE functions
@@ -231,6 +249,10 @@ class ECOMMERCE extends SQLObject{
     }
 
   }
+  public function ReadCategoryChildrenIDs($category_id){
+    $ChildrenTable = $this->ReadCategoryChildren($category_id);
+    return self::getCategoryIDs($ChildrenTable);
+  }
   public function ReadCategoryAllChildrenCount($category_id){
     $count = 0;
     $direct_children = $this->ReadCategoryChildren($category_id);
@@ -244,7 +266,6 @@ class ECOMMERCE extends SQLObject{
     $children_count = sizeof( $this->ReadCategoryChildren($category_id) ) ;
     return $children_count;
   }
-
   public function ReadCategoriesMaxLevel($store_id=NULL){
     $store_id = $this->getStoreId($store_id);
     $store_id = (int) $store_id;
@@ -333,6 +354,23 @@ class ECOMMERCE extends SQLObject{
 
     return $this->status();
   }
+  public function DeleteCategory($category_id){
+    $binds[":category_id"] = (int) $category_id;
+    $this->QUERY(
+     "DELETE FROM categories
+      WHERE category_id = :category_id;
+     ", $binds );
+    $success = $this->status();
+
+    if($success){
+      $ChildrenIDs = $this->ReadCategoryChildrenIDs( $category_id );
+      foreach($ChildrenIDs as $eachChildrenID){
+        $this->DeleteCategory( $eachChildrenID );
+      }
+    }
+
+    return $success;
+  }
   public function ShowCategoryParents( $category_id ){
     $parents_span = "";
     $category_parents =  $this->ReadCategoryParents( $category_id ) ;
@@ -362,7 +400,13 @@ class ECOMMERCE extends SQLObject{
     </div>
     ";
   }
-
+  public static function getCategoryIDs($CategoryTable){
+    $ids = [];
+    foreach($CategoryTable as $row){
+      $ids[] = $row["category_id"];
+    }
+    return $ids;
+  }
   public static function CategoryTableRow2Links($table,$glue = " > "){
     $links_array = [];
 

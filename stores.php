@@ -4,6 +4,7 @@ include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
 $error_message = "";
 if( $SQLConnection->status() ){
+  $ECOM->SecureProtectedSection();
 
   $tiendas_AS = TRANSLATE("tiendas");
   $editar_AS = TRANSLATE("editar");
@@ -13,7 +14,7 @@ if( $SQLConnection->status() ){
   "SELECT
     store_name AS '$tiendas_AS',
     LINK( CONCAT('update_store.php?store_id=',store_id),'$editar_AS','action') AS '$editar_AS',
-    LINK( CONCAT('delete_store.php?store_id=',store_id),'$eliminar_AS','action') AS '$eliminar_AS'
+    LINK( CONCAT('delete_store.php?store_id=',store_id),'$eliminar_AS','action super-protected-section') AS '$eliminar_AS'
    FROM
     stores
    ORDER BY
@@ -53,7 +54,7 @@ xmlns="http://www.w3.org/1999/xhtml">
 	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
   <div id="ui-main">
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
-      <div class="ui-content medium row left-align" >
+      <div class="ui-content medium row left-align protected-section" >
 
         <?php
           DISPLAY::asTable( $store_list, "ui-table");

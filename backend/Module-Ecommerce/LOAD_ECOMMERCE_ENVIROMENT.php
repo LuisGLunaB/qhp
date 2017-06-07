@@ -12,8 +12,12 @@ include_once( ECOMMERCE_ROUTE . "ECOMMERCE.php"); //Object
 
 include_once( ROOT . "/UI/TRANSLATIONS.php");
 
+$hasAccessToProtectedSections = False;
+$isSuperUser = False;
 if( $SQLConnection->status() ){
   $ECOM = new ECOMMERCE();
+  $hasAccessToProtectedSections = $ECOM->hasAccessToProtectedSections();
+  $isSuperUser = $ECOM->hasSuperAdminLevel();
 }else{
   $ECOM = NULL;
 }
