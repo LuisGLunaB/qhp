@@ -14,6 +14,13 @@
   </div>
 
   <div id="category-menu" class="ui-sidebar-item waves-effect">
+      <a class="ui-sidebar-button" href="products.php">
+        <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/products-icon.fw.png" alt="">
+        <div class="ui-sidetext"> <?php pTRANSLATE("productos"); ?> </div>
+      </a>
+  </div>
+
+  <div id="category-menu" class="ui-sidebar-item waves-effect">
       <a class="ui-sidebar-button" href="categories.php">
         <img class="ui-icon" src="<?php echo $ROOT;?>/UI/icons/categories-icon.fw.png" alt="">
         <div class="ui-sidetext"> <?php pTRANSLATE("categorias"); ?> </div>

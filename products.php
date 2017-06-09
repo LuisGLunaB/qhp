@@ -1,55 +1,67 @@
 <?php
-  $ROOT = "."; define("ROOT", $ROOT);
-  include_once( ROOT . "/backend/Loaders/LOADMODULE_SQL_BASIC.php");
-  /* Enviroment: $SQLConnection, $con */
+/* Eviroment: $ECOM, $SQLConnection, $con & defined(ECOMMERCE_ROUTES) */
+include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
-  if( $SQLConnection->status() ){
+$error_message = "";
+if( $SQLConnection->status() ){
 
-    $ViewName = "products_view_ledcity";
-    $FilterFields = [ "category_1_id", "category_2_id", "wattsW" ];
-    $FILTER = NAVIGATE::ParseRequest($_GET, $FilterFields);
+  $productos_AS = TRANSLATE("producto");
+  $editar_AS = TRANSLATE("editar");
+  $eliminar_AS = TRANSLATE("eliminar");
 
-    $page = 0; $limit = 20;
-    $PRODUCTS = new SQLBasicSelector( "products_view_ledcity" );
-    $PRODUCTS->WHERE( $FILTER , $FilterFields );
-    $PRODUCTS->PAGE( $page , $limit );
-    $PRODUCTS->execute();
-    $total = $PRODUCTS->TOTAL();
+  $store_list_query =
+  "SELECT
+    store_name AS '$productos_AS',
+    LINK( CONCAT('update_store.php?store_id=',store_id),'$editar_AS','action') AS '$editar_AS',
+    LINK( CONCAT('delete_store.php?store_id=',store_id),'$eliminar_AS','action super-protected-section') AS '$eliminar_AS'
+   FROM
+    stores
+   ORDER BY
+    store_name ASC
+   ;
+  ";
 
-    list($WHERE_query, $WHERE_binds) = $PRODUCTS->WHERE->getWHERE();
+  $SQL = new SQLObject();
+  $store_list = $SQL->QUERY( $store_list_query );
+}else{
+	$error_message = $SQLConnection->message();
+}
 
-    $OPTIONS_category_1 = NAVIGATE::getCategoriesCount($ViewName,1,$WHERE_query,$WHERE_binds); //If cat 1 selected: Ignore WHERES
-    $OPTIONS_category_2 = NAVIGATE::getCategoriesCount($ViewName,2,$WHERE_query,$WHERE_binds);
-    $OPTIONS_wattsW = NAVIGATE::getFieldCount($ViewName,"wattsW","wattsW",$WHERE_query,$WHERE_binds);
-
-    $SELECT_category_1 = NAVIGATE::buildFormSelect($OPTIONS_category_1, $FILTER["category_1_id"] );
-    $SELECT_category_2 = NAVIGATE::buildFormSelect($OPTIONS_category_2, $FILTER["category_2_id"] );
-    $SELECT_wattsW = NAVIGATE::buildFormSelect($OPTIONS_wattsW, $FILTER["wattsW"] );
-
-  }
-
+# UI Navegation:
+$SectionTitle = "productos";
+$BreadCrumbs = [
+  ["index.php","mi_tienda"]
+];
+$MenuButtons = [
+  ["create_product.php","add"]
+];
 ?>
 
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8">
-    <title></title>
-  </head>
-  <body>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Frameset//EN"
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-frameset.dtd">
+<html lang="<?php pTRANSLATE("lang"); ?>" xml:lang="<?php pTRANSLATE("lang"); ?>"
+xmlns="http://www.w3.org/1999/xhtml">
+<head>
+	<title>E-Commerce</title>
+	<?php include_once( ECOMMERCE_ROUTE . "head-configurations.php" ); ?>
+	<style type="text/css">
 
-    <form id="form" class="form" action="" method="get" enctype="multipart/form-data">
-      <?php
-      print_r($FILTER);
+	</style>
+</head>
 
-      echo $SELECT_category_1;
-      echo $SELECT_category_2;
-      echo $SELECT_wattsW;
+<body onresize="" onload="">
+	<?php include_once("$ROOT/UI/ui-sidebar.php"); ?>
+  <div id="ui-main">
+    <?php include_once("$ROOT/UI/ui-header.php"); ?>
+      <div class="ui-content medium row left-align protected-section" >
 
-      ?>
-      <input type="submit" name="submit" value="Enviar">
-    </form>
+        <?php
+          DISPLAY::asTable( $store_list, "ui-table");
+        ?>
 
-    <?php DISPLAY::asTable( $PRODUCTS->data ); ?>
-  </body>
+      </div>
+  </div>
+  <?php include_once("$ROOT/UI/javascripts.php"); ?>
+</body>
+
 </html>

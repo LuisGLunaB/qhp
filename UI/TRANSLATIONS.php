@@ -34,6 +34,12 @@ $TRANSLATIONS["tienda"]["EN"] = "Store";
 $TRANSLATIONS["tiendas"]["ES"] = "Tiendas";
 $TRANSLATIONS["tiendas"]["EN"] = "Stores";
 
+$TRANSLATIONS["productos"]["ES"] = "Productos";
+$TRANSLATIONS["productos"]["EN"] = "Products";
+
+$TRANSLATIONS["producto"]["ES"] = "Producto";
+$TRANSLATIONS["producto"]["EN"] = "Product";
+
 $TRANSLATIONS["ver_todos"]["ES"] = "Ver todos";
 $TRANSLATIONS["ver_todos"]["EN"] = "See all";
 
