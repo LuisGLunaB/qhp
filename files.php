@@ -2,8 +2,7 @@
 include_once("./FileObject.php");
 if( array_key_exists("Archivo",$_FILES) ){
   $Archivo = new FileObject( $_FILES["Archivo"] );
-  echo $Archivo->SaveTo();
-  print_r($_FILES);
+  $Archivo->SaveTo();
 }
 
 ?>

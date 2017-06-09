@@ -7,56 +7,79 @@ class FileObject{
       $this->LoadFromSystem($fileOrPath);
     }
   }
+
   public function LoadFromRequest($fileArray){
-    //basename()
     $this->LoadedFrom = "Request";
 
+    $this->path = $fileArray["tmp_name"];
+
     $this->name = $fileArray["name"];
-    $this->type = $fileArray["type"];
-    $this->error = $fileArray["error"];
+    $this->extension = $fileArray["type"];
     $this->size = $fileArray["size"];
 
-    $this->tmp_name = $fileArray["tmp_name"];
-    $this->path = $this->tmp_name;
-
-    $this->message = "";
+    if( $fileArray["error"] == 0 ){
+      $this->message = "";
+    }else{
+      $this->message = $this->CatchUploadError($fileArray["error"]);
+    }
+    return $this->status();
   }
   public function LoadFromSystem($path){
-    return NULL;
+    $this->LoadedFrom = "System";
+
+    $this->path = $path;
+    $this->message = "";
+    try {
+      $this->name = basename($path);
+      $this->extension = $this->getExtension();
+      $this->size = filesize($path);
+    } catch (Exception $e) {
+      $this->message = " * Error when loading file from system:" . $e->getMessage();
+    }
+
+    return $this->status();
+  }
+
+  protected function CatchUploadError($code){
+    switch ($code) {
+     case UPLOAD_ERR_INI_SIZE:
+         $message = "* The uploaded file exceeds the upload_max_filesize directive in php.ini.";break;
+     case UPLOAD_ERR_FORM_SIZE:
+         $message = "* The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form.";break;
+     case UPLOAD_ERR_PARTIAL:
+         $message = "* The uploaded file was only partially uploaded.";break;
+     case UPLOAD_ERR_NO_FILE:
+         $message = "* No file was uploaded.";break;
+     case UPLOAD_ERR_NO_TMP_DIR:
+         $message = "* Missing a temporary folder.";break;
+     case UPLOAD_ERR_CANT_WRITE:
+         $message = "* Failed to write file to disk.";break;
+     case UPLOAD_ERR_EXTENSION:
+         $message = "* File upload stopped by extension.";break;
+     default:
+         $message = "* Unknown upload error.";break;
+   }
+   return $message;
   }
 
   public function SaveTo($path="./",$overWrite=True){
-    if( $this->isFromRequest() ){
-      $success = $this->SaveFromRequestTo($path,$overWrite);
+    $fullpath = ( $path . $this->getNameAndExtension() );
+
+    if( $this->isRequestFile() ){
+      $success = $this->SaveFromRequestTo($fullpath,$overWrite);
     }else{
-      $success = $this->CopyTo($path,$overWrite);
+      $success = $this->CopyTo($fullpath,$overWrite);
     }
 
-    if( $success ){ $this->LoadFromSystem($path); }
+    if( $success ){ $this->LoadFromSystem($fullpath); }
     return $success;
   }
-  public function CopyTo($path="./", $overWrite=True){
-    // Duplicate file to destination
-  }
-  public function CutTo($path="./",$overWrite=True){
-    // Delete Me, Open destination copy
-  }
-  public function DeleteMe(){
-    return NULL;
-  }
-  public static function Delete($path="./"){
-    return NULL;
-  }
-
-  protected function SaveFromRequestTo($path="./",$overWrite=True){
-    $name_and_extension = $this->getName();
-    echo $name_and_extension;
-    $fullpath = $path.$name_and_extension;
-    if( (!$overWrite) and self::Exists($fullpath) ){
+  protected function SaveFromRequestTo($path,$overWrite=True){
+    if( (!$overWrite) and file_exists($path) ){
         $this->message = "* Error: File alredy exists (Overwriting was not enabled).";
         return False;
     }else{
-        if( move_uploaded_file($this->getTemporalName(), $fullpath) ){
+        if( move_uploaded_file($this->getPath(), $path) ){
           return True;
         }else{
           $this->message = "* Error: Uploading file from client failed. Please try again.";
@@ -65,18 +88,24 @@ class FileObject{
     }
   }
 
-  public static function Exists($path){
-    return file_exists($path);
+  public function CopyTo($path="./", $overWrite=True){
+    // Duplicate file to destination
+  }
+  public function MoveTo($path="./",$overWrite=True){
+    // Delete Me, Open destination copy
+  }
+  public function DeleteMe(){
+    return NULL;
   }
 
   public function getExtension(){
-    if( $this->isFromRequest() ){
+    if( $this->isRequestFile() ){
       return $this->getExtensionFromName();
     }else{
       return pathinfo( $this->getPath(), PATHINFO_EXTENSION);
     }
   }
-  public function getExtensionFromName(){
+  protected function getExtensionFromName(){
     $name = $this->name;
     list($basename,$extension) = explode(".",$name,2);
     return $extension;
@@ -91,14 +120,27 @@ class FileObject{
 
     return ( in_array($extension,$ImageExtensionsArray) );
   }
-
   public function isBiggerThan($bytes){
     return ( $this->getSize() > $bytes );
   }
   public function isBiggerThanMB($mb){
     return ( $this->getSizeInMB() > $mb );
   }
+  protected function isRequestFile(){
+    return ( $this->LoadedFrom == "Request" );
+  }
 
+  public function GetData(){
+    $Array["LoadedFrom"] = $this->getLoadedFrom();
+    $Array["path"] = $this->getPath();
+    $Array["name"] = $this->getName();
+    $Array["extension"] = $this->getExtension();
+    $Array["size"] = $this->getSizeInMB();
+    $Array["status"] = $this->status();
+    $Array["message"] = $this->message();
+
+    return $Array;
+  }
   public function getSize(){
     return $this->size;
   }
@@ -111,12 +153,11 @@ class FileObject{
   public function getName(){
     return $this->name;
   }
-
-  protected function getTemporalName(){
-    return $this->tmp_name;
+  public function getNameAndExtension(){
+    return $this->name;
   }
-  public function isFromRequest(){
-    return ( $this->LoadedFrom == "Request" );
+  protected function getLoadedFrom(){
+    return $this->LoadedFrom;
   }
 
   public function status(){
