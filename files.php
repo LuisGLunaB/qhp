@@ -1,8 +1,13 @@
 <?php
 include_once("./FileObject.php");
 if( array_key_exists("Archivo",$_FILES) ){
-  $Archivo = new FileObject( $_FILES["Archivo"] );
-  $Archivo->SaveTo();
+  $Archivo = new ImageObject( $_FILES["Archivo"] );
+  $Archivo->SaveTo("./uploads/", "ejemplo_compressed." . $Archivo->getExtension() );
+  // Create Thumbnail
+  // Cropping
+  $Archivo->Resize(100,100); //Fit
+  $Archivo->Compress();
+
 }
 
 ?>
