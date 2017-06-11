@@ -119,17 +119,20 @@ class FileObject{
 
   public function getExtension(){
     if( $this->isRequestFile() ){
-      $extension = $this->getExtensionFromName();
+      $extension = self::getPlainNameAndExtension( $this->getName() )[1];
     }else{
-      $extension = pathinfo( $this->getPath(), PATHINFO_EXTENSION);
+      $extension = strtolower(pathinfo( $this->getPath(), PATHINFO_EXTENSION));
     }
     return strtolower($extension);
   }
-  protected function getExtensionFromName(){
-    $name = $this->name;
+  protected static function getPlainNameAndExtension($path){
+    $name = basename($path);
     $exploded = explode(".",$name);
     $n = sizeof($exploded);
-    return $exploded[$n-1];
+    $extension = strtolower( $exploded[$n-1] );
+    array_pop($exploded);
+    $plainname = implode(".",$exploded);
+    return [$plainname , $extension];
   }
 
   public function isExtension($ExtensionsArray){
@@ -195,12 +198,65 @@ class FileObject{
   }
 }
 
-define("IMAGE_COMPRESSION_QUALITY",75);
-define("IMAGE_DEFAULT_FIT_SIZE",1280);
 
 class ImageObject extends FileObject{
   public function __construct($fileOrPath){
     parent::__construct( $fileOrPath );
+  }
+
+  public function FitTo($pixels){
+    $AspectRatio = $this->getAspectRatio();
+    if( $AspectRatio > 1.0 ){
+      // Image is horizontal
+      return $this->FitWidthTo($pixels);
+    }else{
+      // Image is vertical
+      return $this->FitHeightTo($pixels);
+    }
+  }
+  public function FitWidthTo($resized_width){
+    list($width, $height, $ratio) = $this->getImageDimensions();
+
+    if( $width > $resized_width ){
+      $resized_height = ceil( $resized_width / $ratio );
+      return $this->Resize( $resized_width, $resized_height );
+    }else{
+      // Image is Alredy fitted
+      return True;
+    }
+  }
+  public function FitHeightTo($resized_height){
+    list($width, $height, $ratio) = $this->getImageDimensions();
+
+    if( $height > $resized_height ){
+      $resized_width = ceil( $resized_height * $ratio );
+      return $this->Resize( $resized_width, $resized_height );
+    }else{
+      // Image is Alredy fitted
+      return True;
+    }
+  }
+
+  public function CreateThumbnail($fitSize=150,$quality=75){
+    $originalPath = $this->getPath();
+    copy( $originalPath, $this->getThumbnailPath() );
+
+    $this->LoadThumbnail();
+    $this->FitTo( $fitSize );
+    $this->Compress( $quality );
+
+    $this->LoadFromSystem( $originalPath );
+  }
+  public function LoadThumbnail(){
+    return $this->LoadFromSystem( $this->getThumbnailPath() );
+  }
+  public function getThumbnailPath(){
+    $pathinfo = pathinfo( $this->getPath() );
+    $DirectoryAndFileName = ( $pathinfo["dirname"] . "/" . $pathinfo["filename"] );
+    $Extension = ( "." . $pathinfo["extension"] );
+    $originalPath = $DirectoryAndFileName.$Extension;
+    $thumbnailPath = $DirectoryAndFileName."_thumb".$Extension;
+    return $thumbnailPath;
   }
 
   public function Resize($resized_width,$resized_height){
@@ -215,6 +271,12 @@ class ImageObject extends FileObject{
     $this->SaveImage($resized_image);
 
     return $this->LoadFromSystem();
+  }
+
+  public function getImageDimensions(){
+    list($width, $height) = $this->getImageSize();
+    $ratio = $this->getAspectRatio();
+    return [$width,$height,$ratio];
   }
   public function getImageSize(){
     return getimagesize( $this->getPath() );
@@ -256,7 +318,7 @@ class ImageObject extends FileObject{
     return $this->LoadFromSystem();
   }
 
-  public function Compress($quality=IMAGE_COMPRESSION_QUALITY){
+  public function Compress($quality=75){
     try {
       if( $this->isJPEG() ){ $this->CompressJPEG($quality); }
       if( $this->isPNG() ){ $this->CompressPNG($quality); }
@@ -267,20 +329,61 @@ class ImageObject extends FileObject{
       return False;
     }
   }
-  protected function CompressJPEG($quality=IMAGE_COMPRESSION_QUALITY){
+  protected function CompressJPEG($quality=75){
     $image = imagecreatefromjpeg( $this->getPath() );
     unlink( $this->getPath() );
     imagejpeg($image, $this->getPath() ,$quality);
   }
-  protected function CompressPNG($quality=IMAGE_COMPRESSION_QUALITY){
+  protected function CompressPNG($quality=75){
     $quality = (int) floor( max(min($quality,99),10) / 10 );
 
     $image = imagecreatefrompng( $this->getPath() );
     unlink( $this->getPath() );
     imagepng($image, $this->getPath() , $quality, PNG_ALL_FILTERS );
   }
-  protected function CompressGIF($quality=IMAGE_COMPRESSION_QUALITY){
+  protected function CompressGIF($quality=75){
     return NULL;
+  }
+
+  public function Convert2JPEG(){
+    return $this->Convert2Format("jpeg");
+  }
+  public function Convert2PNG(){
+    return $this->Convert2Format("png");
+  }
+  public function Convert2GIF(){
+    return $this->Convert2Format("gif");
+  }
+  protected function Convert2Format($format="jpeg"){
+      $format = strtolower($format);
+      $format = ($format=="jpg") ? "jpeg" : $format;
+      $format_variant = ($format=="jpeg") ? "jpg" : $format;
+      if( $this->isImage() ){
+          if( ! $this->isExtension( [$format,$format_variant] ) ){
+              $image = $this->CreateMyImage();
+              $pathinfo = pathinfo( $this->getPath() );
+              $outputPath = ( $pathinfo["dirname"] . "/" . $pathinfo["filename"] . ".$format" );
+              try {
+                call_user_func_array("image$format", [$image, $outputPath]);
+                $success = True;
+              } catch (Exception $e) {
+                $success = False;
+                $this->message = "* Error when converting image to .$format";
+              }
+
+              if($success){
+                unlink( $this->getPath() );
+                return $this->LoadFromSystem( $outputPath );
+              }else{
+                return False;
+              }
+          }else{
+            return True;
+          }
+      }else{
+        $this->message = "* File is not an image, It can not be converted to .$format";
+        return False;
+      }
   }
 
   public function isJPEG(){

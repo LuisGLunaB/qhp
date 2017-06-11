@@ -3,9 +3,10 @@ include_once("./FileObject.php");
 if( array_key_exists("Archivo",$_FILES) ){
   $Archivo = new ImageObject( $_FILES["Archivo"] );
   $Archivo->SaveTo("./uploads/", "ejemplo_compressed." . $Archivo->getExtension() );
-  // Create Thumbnail
   // Cropping
-  $Archivo->Resize(100,100); //Fit
+  $Archivo->Convert2JPEG();
+  $Archivo->CreateThumbnail(100);
+  $Archivo->FitTo(550);
   $Archivo->Compress();
 
 }
