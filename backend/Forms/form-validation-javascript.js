@@ -42,6 +42,18 @@
     set_form_error( TRANSLATE(error_message_key) , Form);
   }
 
+  function ShowThumbnail(input) {
+    if (input.files && input.files[0]) {
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            image_source = e.target.result;
+            clase =  $(input).attr('id');
+            $('.'+clase).css("background-image", "url(" + image_source + ")");
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+  }
+
   //
   // function isTextBlank( inputName ){
   //   Input = getValue(inputName);

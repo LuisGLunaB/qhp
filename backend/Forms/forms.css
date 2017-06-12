@@ -8,6 +8,66 @@ form input, form label, form select, form textarea, form .button{
   width: 90% !important;
   height: auto !important;
 }
+
+form label{
+  width: 100% !important;
+}
+
+form textarea{
+  margin-top: 5px;
+  width: 92% !important;
+  border-color: rgb(190,190,190) !important;
+}
+
+form input.file{
+	width: 0.1px;
+	height: 0.1px;
+	opacity: 0;
+	overflow: hidden;
+	position: absolute;
+	z-index: -1;
+}
+
+form label.fileimage1{
+  cursor: pointer;
+  text-align: center !important;
+  width: 100px !important;
+  height: 100px !important;
+  display: inline-block !important;
+  position: relative !important;
+  border: 1px solid black  !important;
+  border-color: rgb(190,190,190) !important;
+  border-radius: 10px !important;
+  background-image: url("../../UI/icons/bigimage-icon.fw.png");
+  background-position: center center;
+  background-size: contain;
+  background-repeat: no-repeat;
+  margin-top: 5px;
+  margin-bottom: 3px;
+}
+
+form .special{
+  width: 45% !important;
+  background-size: auto 75%;
+  background-position: right center;
+  background-repeat: no-repeat;
+}
+form .special.money{
+  width: 30% !important;
+  background-image: url("../../UI/icons/money-icon.fw.png");
+}
+form .special.number{
+  width: 30% !important;
+  background-image: url("../../UI/icons/number-icon.fw.png");
+}
+form .special.code{
+  background-image: url("../../UI/icons/code-icon.fw.png");
+}
+
+form .number{
+  width: 50% !important;
+}
+
 form label{
   font-weight: 700;
   font-size: 13px;

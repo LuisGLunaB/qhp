@@ -40,6 +40,35 @@ $TRANSLATIONS["productos"]["EN"] = "Products";
 $TRANSLATIONS["producto"]["ES"] = "Producto";
 $TRANSLATIONS["producto"]["EN"] = "Product";
 
+$TRANSLATIONS["nuevo_producto"]["ES"] = "Nuevo Producto";
+$TRANSLATIONS["nuevo_producto"]["EN"] = "New Product";
+
+$TRANSLATIONS["descripcion"]["ES"] = "Descripción";
+$TRANSLATIONS["descripcion"]["EN"] = "Description";
+
+$TRANSLATIONS["codigo_interno"]["ES"] = "Código Interno";
+$TRANSLATIONS["codigo_interno"]["EN"] = "Custom Code";
+
+$TRANSLATIONS["imagen_principal"]["ES"] = "Imágen Principal";
+$TRANSLATIONS["imagen_principal"]["EN"] = "Main Image";
+
+
+$TRANSLATIONS["precio"]["ES"] = "Precio";
+$TRANSLATIONS["precio"]["EN"] = "Price";
+
+$TRANSLATIONS["optional"]["ES"] = "Opcional";
+$TRANSLATIONS["optional"]["EN"] = "Optional";
+
+$TRANSLATIONS["precio_principal"]["ES"] = "Precio Principal";
+$TRANSLATIONS["precio_principal"]["EN"] = "Main Price";
+
+
+$TRANSLATIONS["nombre_del_producto"]["ES"] = "Nombre del Producto";
+$TRANSLATIONS["nombre_del_producto"]["EN"] = "Product Name";
+
+$TRANSLATIONS["mi_nuevo_producto"]["ES"] = "Mi nuevo Producto";
+$TRANSLATIONS["mi_nuevo_producto"]["EN"] = "My new Product";
+
 $TRANSLATIONS["ver_todos"]["ES"] = "Ver todos";
 $TRANSLATIONS["ver_todos"]["EN"] = "See all";
 

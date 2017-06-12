@@ -39,7 +39,6 @@
     }
   }
 
-
   function DumpFormValues($assoc,$form=""){
     foreach($assoc as $name=>$value){
       SetFormValue($name,$value,$form);
@@ -49,4 +48,5 @@
     $form = ($form=="") ? "" : ", $form";
     echo "$('*[name=$name]' $form ).val('$value');";
   }
+  
 ?>

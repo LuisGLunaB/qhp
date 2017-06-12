@@ -1,5 +1,5 @@
 <?php
-include_once("./FileObject.php");
+include_once("./backend/Module-Functionals/FileObject.php");
 if( array_key_exists("Archivo",$_FILES) ){
   $Archivo = new ImageObject( $_FILES["Archivo"] );
   $Archivo->SaveTo("./uploads/", "ejemplo_compressed." . $Archivo->getExtension() );
