@@ -4,13 +4,12 @@ include_once("./backend/Module-Ecommerce/LOAD_ECOMMERCE_ENVIROMENT.php");
 
 $error_message = "";
 if( $SQLConnection->status() ){
-
-    # Create Store
-    if( was_form_submitted("create-store-form") ){
+    # Create Product
+    if( was_form_submitted("create-product-form") ){
       /* Eviroment: $form_data, $form_status, $form_error */
-      include_once( ECOMMERCE_ROUTE_processes . "create-store.php" );
+      include_once( ECOMMERCE_ROUTE_processes . "create-product.php" );
       if($form_status){
-        header("Location: stores.php?process=create-store&status=1&form_data=$form_data");
+        header("Location: products.php?product_id=$form_data&process=create-product&status=1&form_data=$form_data");
       }
     }
 
@@ -45,7 +44,9 @@ xmlns="http://www.w3.org/1999/xhtml">
     <?php include_once("$ROOT/UI/ui-header.php"); ?>
       <div class="ui-content small row left-align protected-section" >
 
-        <?php include_once( ECOMMERCE_ROUTE_forms. "create-product-form.php"); ?>
+        <?php
+          include_once( ECOMMERCE_ROUTE_forms. "create-product-form.php");
+        ?>
 
       </div>
 

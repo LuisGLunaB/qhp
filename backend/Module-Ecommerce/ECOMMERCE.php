@@ -1,6 +1,6 @@
 <?php
 class ECOMMERCE extends SQLObject{
-  public $store_id = 1;
+  protected $store_id = 1;
   public $user_level = 4;//0=notLogged,1=StoreVisitor/User,2=Manager,3=Owner,4=Admin,5=SuperAdmin
 
   protected $category_fields = ["category_id","category_name","store_id","category_level",
@@ -15,7 +15,7 @@ class ECOMMERCE extends SQLObject{
     }
 
   public function isStoreManager($store_id=NULL){
-    return ( $this->hasStorePermissions($store_id) and $this->hasOwnerLevel() );
+    return ( $this->hasStorePermissions($store_id) and $this->hasManagerLevel() );
   }
   public function isStoreOwner($store_id=NULL){
     return ( $this->hasStorePermissions($store_id) and $this->hasOwnerLevel() );
@@ -337,7 +337,6 @@ class ECOMMERCE extends SQLObject{
     return $data; //$data = NULL if no children found.
   }
   public function UpdateCategoryName( $category_id, $category_name ){
-
     $binds[":category_id"] = $category_id;
     $binds[":category_name"] = $category_name;
     $binds[":category_url"] = self::string_to_url($category_name);
@@ -452,7 +451,79 @@ class ECOMMERCE extends SQLObject{
     return $i;
   }
 
-  public static function Associative2DataAttributes($Assoc){
+  # PRODUCT function
+  public function CreateProduct($product_name,$product_description,$product_price1,$store_id,$product_code="",$product_is_virtual=False,$product_has_stock=True,$product_is_visible=True,$products_is_active=True){
+    # Obligatory parameters
+    $binds[":product_name"] = $product_name;
+    $binds[":product_description"] = $product_description;
+    $binds[":product_price1"] = $product_price1;
+    $binds[":store_id"] = (int) $store_id;
+    # Optional parameters
+    $binds[":product_code"] = $product_code;
+    $binds[":product_is_virtual"] = (bool) $product_is_virtual;
+    $binds[":product_has_stock"] = (bool) $product_has_stock;
+    $binds[":product_is_visible"] = (bool) $product_is_visible;
+    $binds[":products_is_active"] = (bool) $products_is_active;
+
+    $InsertProductQuery = self::getINSERTSINGLE_query("products",$binds);
+    $this->QUERY( $InsertProductQuery , $binds );
+
+    return $this->VariableOrErrorvalue( $this->lastInsertId() );
+  }
+  public function UpdateProductImage($ImageFile,$product_id,$imageNumber){
+    $imageNumber = (int) $imageNumber;
+    $product_id = (int) $product_id;
+
+    $directory = ROOT . "/images_ecommerce/products/";
+    $name = "product_image$imageNumber"."_$product_id";
+
+    $FILE = SaveEcommerceImage($ImageFile,$directory,$name,$fitSize=800);
+
+    if( $FILE->status() ){
+      return $this->UpdateProductImageName($product_id, $FILE->getNameAndExtension() ,$imageNumber);
+    }else{
+      return False;
+    }
+  }
+  protected function UpdateProductImageName($product_id,$image_name,$imageNumber){
+    $imageNumber = (int) $imageNumber;
+    $product_image = "product_image$imageNumber";
+    $binds[":$product_image"] = $image_name;
+    $binds[":product_id"] = (int) $product_id;
+
+    $this->QUERY(
+     "UPDATE products
+      SET $product_image = :$product_image
+      WHERE product_id = :product_id;
+     ", $binds );
+
+    return $this->status();
+  }
+
+
+  protected static function getINSERTSINGLE_query($tableName,$binds){
+    list($FieldsPlaceholder,$ValuesPlaceholder) = self::getFieldsAndValuesPlaceholdersFromBinds($binds);
+    return "INSERT INTO $tableName ($FieldsPlaceholder) VALUES ($ValuesPlaceholder);";
+  }
+  protected static function getFieldsAndValuesPlaceholdersFromBinds($binds){
+    $FieldsPlaceholder = self::getFieldsPlaceholderFromBinds($binds);
+    $ValuesPlaceholder = self::getValuesPlaceholderFromBinds($binds);
+    return [$FieldsPlaceholder,$ValuesPlaceholder];
+  }
+  protected static function getFieldsPlaceholderFromBinds($binds){
+    return implode(",", self::getFieldsFromBinds($binds) );
+  }
+  protected static function getValuesPlaceholderFromBinds($binds){
+    return implode(",",array_keys($binds));
+  }
+  protected static function getFieldsFromBinds($binds){
+    $fields = [];
+    foreach($binds as $bind => $ignore_me){
+      $fields[] = ltrim($bind, ':');
+    }
+    return $fields;
+  }
+  protected static function Associative2DataAttributes($Assoc){
     $HTMLAttributes = "";
     foreach($Assoc as $key => $value ){
       if(!is_array($value)){
@@ -461,4 +532,20 @@ class ECOMMERCE extends SQLObject{
     }
     return $HTMLAttributes;
   }
+}
+
+function SaveEcommerceImage($ImageFile,$directory,$name,$fitSize=800,$compressionRate=75){
+  $FILE = new ImageObject( $ImageFile );
+  if( $FILE->status() ){
+    $FILE->SaveTo($directory, ("$name.".$FILE->getExtension()) );
+    $FILE->Convert2JPEG();
+
+    $FILE->CreateThumbnail( 500 , $compressionRate, "large" );
+    $FILE->CreateThumbnail( 300 , $compressionRate, "medium" );
+    $FILE->CreateThumbnail( 100, $compressionRate, "small" );
+
+    $FILE->FitTo( $fitSize );
+    $FILE->Compress( $compressionRate );
+  }
+  return $FILE;
 }

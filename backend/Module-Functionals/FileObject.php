@@ -237,25 +237,25 @@ class ImageObject extends FileObject{
     }
   }
 
-  public function CreateThumbnail($fitSize=150,$quality=75){
+  public function CreateThumbnail($fitSize=150,$quality=75,$suffix="thumb"){
     $originalPath = $this->getPath();
-    copy( $originalPath, $this->getThumbnailPath() );
+    copy( $originalPath, $this->getThumbnailPath($suffix) );
 
-    $this->LoadThumbnail();
+    $this->LoadThumbnail($suffix);
     $this->FitTo( $fitSize );
     $this->Compress( $quality );
 
     $this->LoadFromSystem( $originalPath );
   }
-  public function LoadThumbnail(){
-    return $this->LoadFromSystem( $this->getThumbnailPath() );
+  public function LoadThumbnail($suffix="thumb"){
+    return $this->LoadFromSystem( $this->getThumbnailPath($suffix) );
   }
-  public function getThumbnailPath(){
+  public function getThumbnailPath($suffix="thumb"){
     $pathinfo = pathinfo( $this->getPath() );
     $DirectoryAndFileName = ( $pathinfo["dirname"] . "/" . $pathinfo["filename"] );
     $Extension = ( "." . $pathinfo["extension"] );
     $originalPath = $DirectoryAndFileName.$Extension;
-    $thumbnailPath = $DirectoryAndFileName."_thumb".$Extension;
+    $thumbnailPath = $DirectoryAndFileName."_".$suffix.$Extension;
     return $thumbnailPath;
   }
 

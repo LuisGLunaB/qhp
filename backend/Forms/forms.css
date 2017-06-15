@@ -44,6 +44,11 @@ form label.fileimage1{
   background-repeat: no-repeat;
   margin-top: 5px;
   margin-bottom: 3px;
+  word-break: break-all;
+
+  color: black;
+  font-size: 11px;
+  line-height: 9px;
 }
 
 form .special{

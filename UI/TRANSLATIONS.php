@@ -62,6 +62,11 @@ $TRANSLATIONS["optional"]["EN"] = "Optional";
 $TRANSLATIONS["precio_principal"]["ES"] = "Precio Principal";
 $TRANSLATIONS["precio_principal"]["EN"] = "Main Price";
 
+$TRANSLATIONS["falta_el_precio"]["ES"] = "* Falta el precio.";
+$TRANSLATIONS["falta_el_precio"]["EN"] = "* Price is missing.";
+
+$TRANSLATIONS["falta_la_descripcion_del_producto"]["ES"] = "* Falta la descripción del Producto.";
+$TRANSLATIONS["falta_la_descripcion_del_producto"]["EN"] = "* Product description is missing.";
 
 $TRANSLATIONS["nombre_del_producto"]["ES"] = "Nombre del Producto";
 $TRANSLATIONS["nombre_del_producto"]["EN"] = "Product Name";
@@ -96,6 +101,9 @@ $TRANSLATIONS["eliminar_tienda"]["EN"] = "Delete Store";
 ## TOAST
 $TRANSLATIONS["create-store-toast"]["ES"] = "Tienda Creada con éxito.";
 $TRANSLATIONS["create-store-toast"]["EN"] = "Store Created successfully.";
+
+$TRANSLATIONS["create-product-toast"]["ES"] = "Producto Creado con éxito.";
+$TRANSLATIONS["create-product-toast"]["EN"] = "Product Created successfully.";
 
 $TRANSLATIONS["update-store-toast"]["ES"] = "Tienda Actualizada con éxito.";
 $TRANSLATIONS["update-store-toast"]["EN"] = "Store Updated successfully.";
@@ -172,14 +180,24 @@ $TRANSLATIONS["no_tienes_permisos_para_realizar_esta_accion"]["EN"] = "* You don
 
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["ES"] = "* Falta el nombre de la Tienda.";
 $TRANSLATIONS["falta_el_nombre_de_la_tienda"]["EN"] = "* Store name is missing.";
+
 $TRANSLATIONS["falta_el_nombre_de_la_categoria"]["ES"] = "* Falta el nombre de la Categoría.";
 $TRANSLATIONS["falta_el_nombre_de_la_categoria"]["EN"] = "* Category name is missing.";
+
+$TRANSLATIONS["el_archivo_tiene_que_ser_una_imagen"]["ES"] = "* Los archivos tienen que ser imágenes.";
+$TRANSLATIONS["el_archivo_tiene_que_ser_una_imagen"]["EN"] = "* The files must be images.";
 
 $TRANSLATIONS["estas_por_borrar_1_categoria_y"]["ES"] = "Estás a punto de Eliminar 1 Categoría y";
 $TRANSLATIONS["estas_por_borrar_1_categoria_y"]["EN"] = "You are about to Delete 1 Category and";
 
 $TRANSLATIONS["de_sus_subcategorias"]["ES"] = "de sus Subcategorías";
 $TRANSLATIONS["de_sus_subcategorias"]["EN"] = "of its Subcategories";
+
+$TRANSLATIONS["falta_el_nombre_del_producto"]["ES"] = "* Falta el nombre del Producto.";
+$TRANSLATIONS["falta_el_nombre_del_producto"]["EN"] = "* Product name is missing.";
+
+$TRANSLATIONS["el_precio_debe_ser_mayor_a_cero"]["ES"] = "* El Precio debe de ser mayor que cero.";
+$TRANSLATIONS["el_precio_debe_ser_mayor_a_cero"]["EN"] = "* Price must be greater than zero.";
 
 $TRANSLATIONS["estas_seguro"]["ES"] = "¿Estás seguro?";
 $TRANSLATIONS["estas_seguro"]["EN"] = "Are you sure?";

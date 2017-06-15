@@ -20,6 +20,8 @@ if( $SQLConnection->status() ){
   $isSuperUser = $ECOM->hasSuperAdminLevel();
 }else{
   $ECOM = NULL;
+  echo ( "Error when connecting to Database." . $SQLConnection->message() );
+  exit;
 }
 
 /* Eviroment: $ECOM, $SQLConnection, $con */

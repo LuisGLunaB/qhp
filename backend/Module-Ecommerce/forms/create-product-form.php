@@ -1,4 +1,4 @@
-<form id="create-product-form" action="" method="get">
+<form id="create-product-form" action="" method="post" enctype="multipart/form-data">
 <input type="hidden" name="form" value="create-product-form">
 
     <!-- IMAGEN -->
@@ -39,21 +39,39 @@
 </form>
 <script type="text/javascript">
 
-  $("#product_image1").change(function(){
-    ShowThumbnail(this);
+  $image1 = $("#product_image1");
+  $image1.change(function(){
+    File_ShowThumbnail(this);
   });
+
+  $price = $("#product_price1");
+  $price.change( function(){
+    var price = onlyNumericCharacters( $price.val() );
+    $price.val( price );
+  });
+
 </script>
 
 <script type="text/javascript">
-  var $Form_cs1 = $("#create-product-form");
-  $(".save-button", $Form_cs1).click( function(){
-    clear_form_error($Form_cs1);
 
-    if( notEmptyFormValue("store_name",$Form_cs1) ){
-      $Form_cs1.submit();//Or API call and processing.
+  var $Form_cp1 = $("#create-product-form");
+
+  $(".save-button", $Form_cp1).click( function(){
+    clear_form_error($Form_cp1);
+
+    var formError = "";
+    if ( ! File_isImage($image1.get(0)) ) formError += TRANSLATE("el_archivo_tiene_que_ser_una_imagen") + "<br>";
+    if ( ! notEmptyFormValue("product_name",$Form_cp1) ) formError += TRANSLATE("falta_el_nombre_del_producto") + "<br>";
+    if ( ! notEmptyFormValue("product_description",$Form_cp1) ) formError += TRANSLATE("falta_la_descripcion_del_producto") + "<br>";
+    if ( ! notEmptyFormValue("product_price1",$Form_cp1) ) formError += TRANSLATE("falta_el_precio") + "<br>";
+    if ( Number($price.val()) <= 0.0 ) formError += TRANSLATE("el_precio_debe_ser_mayor_a_cero") + "<br>";
+
+    if( formError == "" ){
+      $Form_cp1.submit();
     }else{
-      set_form_error_TRANSLATE("falta_el_nombre_de_la_tienda",$Form_cs1);
+      set_form_error( formError, $Form_cp1 );
     }
+
   });
 
 </script>

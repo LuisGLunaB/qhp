@@ -8,7 +8,6 @@ if( array_key_exists("Archivo",$_FILES) ){
   $Archivo->CreateThumbnail(100);
   $Archivo->FitTo(550);
   $Archivo->Compress();
-
 }
 
 ?>
